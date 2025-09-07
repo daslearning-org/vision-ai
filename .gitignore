@@ -6,6 +6,20 @@ __pycache__/
 # C extensions
 *.so
 
+# local files & folders
+.buildozer/
+*.apk
+*.aab
+*.exe
+*.mp4
+*.avi
+test_codes/
+logs/
+bin/
+dist/
+model_files/
+
+
 # Distribution / packaging
 .Python
 build/
