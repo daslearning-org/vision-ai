@@ -81,7 +81,8 @@ class VisionAiApp(MDApp):
             ])
             context = autoclass('org.kivy.android.PythonActivity').mActivity
             android_path = context.getExternalFilesDir(None).getAbsolutePath()
-            self.video_dir = os.path.join(android_path, 'generated')
+            self.model_dir = os.path.join(android_path, 'model_files')
+            self.op_dir = os.path.join(android_path, 'outputs')
             image_dir = os.path.join(android_path, 'images')
             os.makedirs(image_dir, exist_ok=True)
             self.internal_storage = android_path
@@ -93,8 +94,10 @@ class VisionAiApp(MDApp):
         else:
             self.internal_storage = os.path.abspath("/")
             self.external_storage = os.path.abspath("/")
-            self.video_dir = os.path.join(self.user_data_dir, 'generated')
-        os.makedirs(self.video_dir, exist_ok=True)
+            self.model_dir = os.path.join(self.user_data_dir, 'model_files')
+            self.op_dir = os.path.join(android_path, 'outputs')
+        os.makedirs(self.model_dir, exist_ok=True)
+        os.makedirs(self.op_dir, exist_ok=True)
 
         # file managers
         self.is_img_manager_open = False

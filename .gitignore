@@ -13,6 +13,7 @@ __pycache__/
 *.exe
 *.mp4
 *.avi
+*.onnx
 test_codes/
 logs/
 bin/
