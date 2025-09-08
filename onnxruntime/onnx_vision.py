@@ -35,22 +35,48 @@ coco_labels = {
 
 class OnnxDetect():
     def __init__(self, save_dir=save_path, model_dir=model_path_local, model_name="ssd_mobilenet_v1.onnx"):
-        self.session_flag = False
+        self.model_flag = False
+        self.sess = None
         self.save_dir = save_dir
         self.model_dir = model_dir
         model_path = os.path.join(self.model_dir, model_name)
-        try:
-            self.sess = rt.InferenceSession(model_path)
-            # Get input and output names
-            self.input_name = self.sess.get_inputs()[0].name
-            self.output_names = [o.name for o in self.sess.get_outputs()]
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            self.session_flag = False
-            self.sess = None
+        download_path = os.path.join(self.model_dir, "ssd_mobilenet_v1_10.onnx")
+        if os.path.exists(model_path):
+            self.model_flag = True
+        elif os.path.exists(download_path):
+            model_path = download_path
+            self.model_flag = True
+        else:
+            model_path = download_path
+            print(f"The onnx model: {model_path} does not exist! Downloading it now...")
+            # try to download the file from github
+            downlaod_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
+            import requests
+            try:
+                with requests.get(downlaod_url, stream=True) as req:
+                    req.raise_for_status()
+                    with open(download_path, 'wb') as f:
+                        for chunk in req.iter_content(chunk_size=8192):
+                            f.write(chunk)
+                print(f"Onnx file downloaded successfully to: {download_path} 🎉")
+                self.model_flag = True
+            except requests.exceptions.RequestException as e:
+                print(f"Error downloading the onnx file: {e} 😞")
+
+        if self.model_flag:
+            try:
+                self.sess = rt.InferenceSession(model_path)
+                # Get input and output names
+                self.input_name = self.sess.get_inputs()[0].name
+                self.output_names = [o.name for o in self.sess.get_outputs()]
+            except Exception as e:
+                print(f"Error loading model: {e}")
 
     def run_detect(self, image_path, callback=None):
         final_result = {"status": False, "message": "Initial load"}
+        if self.sess is None:
+            final_result['message'] = "Onnx session was not initialized!"
+            return final_result
         # Load and preprocess the image
         image_filename = image_path.split("/")[-1]
         op_img_path = os.path.join(self.save_dir, f"op-{image_filename}")

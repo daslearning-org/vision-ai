@@ -20,7 +20,8 @@ from kivymd.uix.label import MDLabel
 Window.softinput_mode = "below_target"
 
 # Import your local screen classes & modules
-from screens.img_obj_detect import ImgObjDetBox
+from screens.img_obj_detect import ImgObjDetBox, TempSpinWait
+from onnx_vision import OnnxDetect
 
 ## Global definitions
 __version__ = "0.0.1"
@@ -42,7 +43,7 @@ class ContentNavigationDrawer(MDNavigationDrawerMenu):
 ## kivymd app class
 class VisionAiApp(MDApp):
     is_onnx_running = ObjectProperty()
-    image_path = ObjectProperty(None)
+    image_path = StringProperty("")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -95,9 +96,15 @@ class VisionAiApp(MDApp):
             self.internal_storage = os.path.abspath("/")
             self.external_storage = os.path.abspath("/")
             self.model_dir = os.path.join(self.user_data_dir, 'model_files')
-            self.op_dir = os.path.join(android_path, 'outputs')
+            self.op_dir = os.path.join(self.user_data_dir, 'outputs')
         os.makedirs(self.model_dir, exist_ok=True)
         os.makedirs(self.op_dir, exist_ok=True)
+
+        # create onnx objects
+        self.onnx_detect = OnnxDetect(
+            save_dir=self.op_dir,
+            model_dir=self.model_dir,
+        )
 
         # file managers
         self.is_img_manager_open = False
@@ -152,6 +159,50 @@ class VisionAiApp(MDApp):
         """Closes the file manager for image upload"""
         self.is_img_manager_open = False
         self.img_file_manager.close()
+
+    def submit_onnx_detect(self):
+        if self.image_path == "":
+            self.show_toast_msg("No image is selected!", is_error=True)
+            return
+        if self.is_onnx_running:
+            self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
+            return
+        onnx_thread = Thread(target=self.onnx_detect.run_detect, args=(self.image_path, self.onnx_detect_callback), daemon=True)
+        onnx_thread.start()
+        self.is_onnx_running = True
+        tmp_spin = TempSpinWait()
+        result_box = self.root.ids.img_detect_box.ids.result_image
+        result_box.clear_widgets()
+        result_box.add_widget(tmp_spin)
+
+    def onnx_detect_callback(self, onnx_resp):
+        status = onnx_resp["status"]
+        message = onnx_resp["message"]
+        self.is_onnx_running = False
+        if status is True:
+            self.show_toast_msg(f"Output generated at: {message}")
+            result_box = self.root.ids.img_detect_box.ids.result_image
+            result_box.clear_widgets()
+            fitImage = Image(
+                source = message,
+                fit_mode = "contain"
+            )
+            result_box.add_widget(fitImage)
+        else:
+            self.show_toast_msg(message, is_error=True)
+
+    def events(self, instance, keyboard, keycode, text, modifiers):
+        """Handle mobile device button presses (e.g., Android back button)."""
+        if keyboard in (1001, 27):  # Android back button or equivalent
+            if self.is_img_manager_open:
+                # Check if we are at the root of the directory tree
+                if self.img_file_manager.current_path == self.external_storage:
+                    self.show_toast_msg(f"Closing file manager from main storage")
+                    self.img_file_exit_manager()
+                else:
+                    self.img_file_manager.back()  # Navigate back within file manager
+                return True  # Consume the event to prevent app exit
+        return False
 
 if __name__ == '__main__':
     VisionAiApp().run()

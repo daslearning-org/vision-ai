@@ -7,6 +7,22 @@ from kivymd.uix.button import MDFillRoundFlatIconButton
 
 
 Builder.load_string('''
+<TempSpinWait>:
+    id: temp_spin
+    orientation: 'horizontal'
+    adaptive_height: True
+    padding: dp(8)
+
+    MDLabel:
+        text: "Please wait..."
+        font_style: "Subtitle1"
+        adaptive_width: True
+
+    MDSpinner:
+        size_hint: None, None
+        size: dp(14), dp(14)
+        active: True
+
 
 <ImgObjDetBox@MDBoxLayout>:
     orientation: 'vertical'
@@ -42,7 +58,7 @@ Builder.load_string('''
             md_bg_color: 'orange'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.6
-            on_release: app.submit_detect_req()
+            on_release: app.submit_onnx_detect()
 
         MDFillRoundFlatIconButton:
             id: btn_reset
@@ -56,13 +72,14 @@ Builder.load_string('''
 
     BoxLayout: # converted image
         size_hint_y: 0.4
-        FitImage:
-            id: result_image
-            #source: "bg.jpg"
+        id: result_image
+        # add result here
 
 
 ''')
 
+class TempSpinWait(MDBoxLayout):
+    pass
 
 class ImgObjDetBox(MDBoxLayout):
     def __init__(self, **kwargs):
