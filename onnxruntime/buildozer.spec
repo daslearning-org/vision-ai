@@ -338,7 +338,7 @@ p4a.branch = develop
 #p4a.source_dir = ./libs
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
-p4a.local_recipes = ./p4a_local_recipes
+p4a.local_recipes = ./p4a_local_recipies
 
 # (str) Filename to the hook for p4a
 #p4a.hook =
