@@ -29,14 +29,14 @@ Builder.load_string('''
     spacing: dp(4)
 
     BoxLayout: # original image
-        size_hint_y: 0.5
+        size_hint_y: 0.4
         id: uploaded_image
         #adaptive_height: True
         # add fit image here
 
     MDGridLayout: # buttons
         cols: 3
-        size_hint_y: 0.2
+        size_hint_y: 0.1
         spacing: dp(4)
         padding: 14, 0, 14, 0 # left, top, right, bottom
 
@@ -71,7 +71,7 @@ Builder.load_string('''
             #on_release: app.open_demo_video()
 
     BoxLayout: # converted image
-        size_hint_y: 0.4
+        size_hint_y: 0.5
         id: result_image
         # add result here
 
