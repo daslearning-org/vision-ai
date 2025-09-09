@@ -38,7 +38,7 @@ version.filename = %(source.dir)s/main.py
 # (list) Application requirements
 # /<your-codebase>/.buildozer/android/platform/build-arm64-v8a/build/python-installs/ttssts/arm64-v8a
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3, kivy==2.3.1, kivymd==1.2.0, pyjnius, android, docutils, filetype, pillow, Pygments, requests, coloredlogs, flatbuffers, packaging, numpy, opencv, mpmath, sympy, onnxruntime
+requirements = python3, kivy==2.3.1, kivymd==1.2.0, pyjnius, android, docutils, filetype, pillow, Pygments, requests, coloredlogs, flatbuffers, packaging, numpy, opencv, mpmath, protobuf,sympy, onnxruntime
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -97,7 +97,7 @@ fullscreen = 0
 # (list) Permissions
 # (See https://developer.android.com/reference/android/Manifest.permission for all the supported syntaxes and properties)
 #android.permissions = android.permission.INTERNET, (name=android.permission.WRITE_EXTERNAL_STORAGE;maxSdkVersion=18)
-android.permissions = android.permission.READ_EXTERNAL_STORAGE, android.permission.WRITE_EXTERNAL_STORAGE, (name=android.permission.MANAGE_EXTERNAL_STORAGE;maxSdkVersion=29)
+android.permissions = android.permission.READ_EXTERNAL_STORAGE, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.INTERNET, (name=android.permission.MANAGE_EXTERNAL_STORAGE;maxSdkVersion=29)
 
 # (list) features (adds uses-feature -tags to manifest)
 #android.features = android.hardware.usb.host
@@ -112,8 +112,7 @@ android.minapi = 28
 #android.sdk = 20
 
 # (str) Android NDK version to use
-android.ndk = 26d
-#25b
+android.ndk = 25b
 
 # This sets Gradle's maximum JVM heap size to 2048 megabytes (2GB).
 #android.gradle_properties = org.gradle.jvmargs=-Xmx2048m
