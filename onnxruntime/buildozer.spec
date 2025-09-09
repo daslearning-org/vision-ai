@@ -38,7 +38,7 @@ version.filename = %(source.dir)s/main.py
 # (list) Application requirements
 # /<your-codebase>/.buildozer/android/platform/build-arm64-v8a/build/python-installs/ttssts/arm64-v8a
 # comma separated e.g. requirements = sqlite3,kivy
-requirements = python3, kivy==2.3.1, kivymd==1.2.0, pyjnius, android, docutils, filetype, pillow, Pygments, requests, numpy, opencv, mpmath, sympy, onnxruntime
+requirements = python3, kivy==2.3.1, kivymd==1.2.0, pyjnius, android, docutils, filetype, pillow, Pygments, requests, coloredlogs, flatbuffers, packaging, numpy, opencv, mpmath, sympy, onnxruntime
 
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
@@ -338,7 +338,7 @@ p4a.branch = develop
 #p4a.source_dir = ./libs
 
 # (str) The directory in which python-for-android should look for your own build recipes (if any)
-p4a.local_recipes = ./p4a_local_recipies
+p4a.local_recipes = ./p4a_local_recipes
 
 # (str) Filename to the hook for p4a
 #p4a.hook =

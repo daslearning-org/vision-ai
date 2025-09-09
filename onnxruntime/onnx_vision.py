@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import onnxruntime as rt
+from onnxruntime import InferenceSession
 from kivy.clock import Clock
 
 import os, sys
@@ -65,7 +65,7 @@ class OnnxDetect():
 
         if self.model_flag:
             try:
-                self.sess = rt.InferenceSession(model_path)
+                self.sess = InferenceSession(model_path)
                 # Get input and output names
                 self.input_name = self.sess.get_inputs()[0].name
                 self.output_names = [o.name for o in self.sess.get_outputs()]
