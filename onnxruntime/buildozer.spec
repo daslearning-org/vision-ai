@@ -112,7 +112,8 @@ android.minapi = 28
 #android.sdk = 20
 
 # (str) Android NDK version to use
-android.ndk = 25b
+android.ndk = 26d
+#25b
 
 # This sets Gradle's maximum JVM heap size to 2048 megabytes (2GB).
 #android.gradle_properties = org.gradle.jvmargs=-Xmx2048m

@@ -19,6 +19,7 @@ logs/
 bin/
 dist/
 model_files/
+onnxruntime_termux/
 
 
 # Distribution / packaging
