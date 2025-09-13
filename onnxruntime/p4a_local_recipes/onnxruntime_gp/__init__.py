@@ -17,11 +17,13 @@ class OnnxRuntimeRecipe(CythonRecipe):
     def get_recipe_env(self, arch=None, with_flags_in_cc=True):
         env = super().get_recipe_env(arch, with_flags_in_cc)
         env["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5"
+        env['CPPFLAGS'] += ' -Wno-unused-variable'
 
         # Make sure cross python/protoc are visible
-        env["PYTHON_EXECUTABLE"] = self.ctx.hostpython
+        env["PYTHON_EXECUTABLE"] = sh.which("python3")
         env["ONNX_CUSTOM_PROTOC_EXECUTABLE"] = sh.which("protoc")
         print(f"Host Python: {self.ctx.hostpython}")
+        print(f"NDK Dir: {self.ctx.ndk_dir}")
         return env
 
     def build_arch(self, arch):
@@ -30,15 +32,18 @@ class OnnxRuntimeRecipe(CythonRecipe):
         env = self.get_recipe_env(arch)
 
         build_dir = self.get_build_dir(arch.arch)
-        cmake_dir = join(self.get_build_dir(arch.arch), "cmake")
+        cmake_dir = join(build_dir, "onnxruntime", "cmake")
+        capi_dir = join(build_dir, "onnxruntime", "capi")
         python_site_packages = self.ctx.get_site_packages_dir(arch)
-        python_include_numpy = join(python_site_packages,
-                                    'numpy', 'core', 'include')
-        self.apply_patches(arch)
+        python_include_numpy = join(python_site_packages, 'numpy', 'core', 'include')
+        protoc_path = sh.which("protoc")
+        python_path = sh.which("python")
+        shprint(sh.mkdir, "-p", capi_dir)
 
         cmake_args = [
             "cmake",
             cmake_dir,
+            f"-DCMAKE_INSTALL_PREFIX={capi_dir}",
             f"-DCMAKE_TOOLCHAIN_FILE={self.ctx.ndk_dir}/build/cmake/android.toolchain.cmake",
             f"-DANDROID_ABI={arch.arch}",
             f"-DANDROID_NATIVE_API_LEVEL={self.ctx.ndk_api}",
@@ -47,13 +52,16 @@ class OnnxRuntimeRecipe(CythonRecipe):
             "-DPYBIND11_USE_CROSSCOMPILING=TRUE",
             "-Donnxruntime_USE_NNAPI_BUILTIN=ON",
             "-Donnxruntime_USE_XNNPACK=ON",
+            f"-DPYTHON_EXECUTABLE={python_path}",
+            f"-DONNX_CUSTOM_PROTOC_EXECUTABLE={protoc_path}",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
         ]
 
-        shprint(sh.mkdir, "-p", build_dir)
+
         with current_directory(build_dir):
             shprint(sh.Command("cmake"), *cmake_args, _env=env)
             shprint(sh.Command("cmake"), "--build", ".", _env=env)
+            shprint(sh.Command("cmake"), "--install", ".", _env=env)
 
             print("Listing the cmake directory:")
             shprint(sh.ls, "-R", cmake_dir)
