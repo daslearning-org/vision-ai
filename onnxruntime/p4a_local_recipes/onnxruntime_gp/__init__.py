@@ -81,9 +81,8 @@ class OnnxRuntimeRecipe(CythonRecipe):
             # Install wheel into target python site-packages
             pyver = self.ctx.python_recipe.version[0:4].replace(".", "")
             whl_pattern = f"onnxruntime-{self.version}-cp{pyver}-*.whl"
-            wheels = glob.glob(whl_pattern)
-            if not wheels:
-                raise Exception('No wheel found matching pattern')
+            wheels = glob.glob(join(dist_dir, whl_pattern))
+            print(f"Found wheels: {wheels}")
 
             shprint(
                 sh.Command(python_path),
