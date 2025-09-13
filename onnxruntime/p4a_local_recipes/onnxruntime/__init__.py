@@ -29,7 +29,6 @@ class OnnxruntimeRecipe(Recipe):
             python_site_packages = self.ctx.get_site_packages_dir(arch)
             python_include_numpy = join(python_site_packages,
                                         'numpy', 'core', 'include')
-            protoc_path = join(self.get_recipe("protobuf", self.ctx).get_build_dir(arch.arch), "protoc")
             # Setup CMake arguments based on Termux script and Android requirements
             cmake_args = [
                 "cmake",
