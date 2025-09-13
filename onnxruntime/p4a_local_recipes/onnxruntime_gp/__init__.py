@@ -32,8 +32,9 @@ class OnnxRuntimeRecipe(CythonRecipe):
         env = self.get_recipe_env(arch)
 
         build_dir = self.get_build_dir(arch.arch)
-        cmake_dir = join(build_dir, "onnxruntime", "cmake")
-        capi_dir = join(build_dir, "onnxruntime", "capi")
+        cmake_dir = join(build_dir, "cmake")
+        capi_dir = join(build_dir, "capi")
+        dist_dir = join(build_dir, "dist")
         python_site_packages = self.ctx.get_site_packages_dir(arch)
         python_include_numpy = join(python_site_packages, 'numpy', 'core', 'include')
         protoc_path = sh.which("protoc")
@@ -55,13 +56,16 @@ class OnnxRuntimeRecipe(CythonRecipe):
             f"-DPYTHON_EXECUTABLE={python_path}",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE={protoc_path}",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
+            "-DCMAKE_BUILD_TYPE=RELEASE"
         ]
 
 
         with current_directory(build_dir):
             shprint(sh.Command("cmake"), *cmake_args, _env=env)
+            shprint(sh.Command("cmake"), "--build", ".", "--target", "generate_build_and_package_info", _env=env)
             shprint(sh.Command("cmake"), "--build", ".", _env=env)
             shprint(sh.Command("cmake"), "--install", ".", _env=env)
+            shprint("tree", build_dir)
 
             print("Listing the cmake directory:")
             shprint(sh.ls, "-R", cmake_dir)
@@ -72,14 +76,17 @@ class OnnxRuntimeRecipe(CythonRecipe):
             print(f"Host Python: {self.ctx.hostpython}")
             hostpython = sh.Command(self.hostpython_location)
             print(f"Host Python: {self.hostpython_location}")
-            shprint(hostpython, "-m", "build", "--wheel", "--no-isolation", _env=env)
+            shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
 
             # Install wheel into target python site-packages
             pyver = self.ctx.python_recipe.version[0:4].replace(".", "")
             whl_pattern = f"onnxruntime-{self.version}-cp{pyver}-*.whl"
+            wheels = glob.glob(whl_pattern)
+            if not wheels:
+                raise Exception('No wheel found matching pattern')
 
             shprint(
-                sh.Command(hostpython),
+                sh.Command(python_path),
                 "-m",
                 "pip",
                 "install",
@@ -87,7 +94,7 @@ class OnnxRuntimeRecipe(CythonRecipe):
                 "--prefix",
                 '--target',
                 self.ctx.get_python_install_dir(arch.arch),
-                join("dist", whl_pattern),
+                join(dist_dir, whl_pattern),
                 _env=env,
             )
 
