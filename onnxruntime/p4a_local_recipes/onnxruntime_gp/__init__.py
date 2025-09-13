@@ -21,7 +21,7 @@ class OnnxRuntimeRecipe(CythonRecipe):
         # Make sure cross python/protoc are visible
         env["PYTHON_EXECUTABLE"] = self.ctx.hostpython
         env["ONNX_CUSTOM_PROTOC_EXECUTABLE"] = sh.which("protoc")
-
+        print(f"Host Python: {self.ctx.hostpython}")
         return env
 
     def build_arch(self, arch):
@@ -29,12 +29,16 @@ class OnnxRuntimeRecipe(CythonRecipe):
 
         env = self.get_recipe_env(arch)
 
-        build_dir = join(self.get_build_dir(arch.arch), "build")
+        build_dir = self.get_build_dir(arch.arch)
+        cmake_dir = join(self.get_build_dir(arch.arch), "cmake")
+        python_site_packages = self.ctx.get_site_packages_dir(arch)
+        python_include_numpy = join(python_site_packages,
+                                    'numpy', 'core', 'include')
         self.apply_patches(arch)
 
         cmake_args = [
             "cmake",
-            "..",
+            cmake_dir,
             f"-DCMAKE_TOOLCHAIN_FILE={self.ctx.ndk_dir}/build/cmake/android.toolchain.cmake",
             f"-DANDROID_ABI={arch.arch}",
             f"-DANDROID_NATIVE_API_LEVEL={self.ctx.ndk_api}",
@@ -43,7 +47,7 @@ class OnnxRuntimeRecipe(CythonRecipe):
             "-DPYBIND11_USE_CROSSCOMPILING=TRUE",
             "-Donnxruntime_USE_NNAPI_BUILTIN=ON",
             "-Donnxruntime_USE_XNNPACK=ON",
-            f"-DPython_NumPy_INCLUDE_DIR={self.ctx.python_installs_dir}/numpy/core/include",
+            f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
         ]
 
         shprint(sh.mkdir, "-p", build_dir)
@@ -51,13 +55,21 @@ class OnnxRuntimeRecipe(CythonRecipe):
             shprint(sh.Command("cmake"), *cmake_args, _env=env)
             shprint(sh.Command("cmake"), "--build", ".", _env=env)
 
+            print("Listing the cmake directory:")
+            shprint(sh.ls, "-R", cmake_dir)
+            print("Listing the build directory:")
+            shprint(sh.ls, "-R", build_dir)
             # Build wheel
-            shprint(sh.Command("python3"), "-m", "build", "--wheel", "--no-isolation", _env=env)
+            hostpython = sh.Command(self.ctx.hostpython)
+            print(f"Host Python: {self.ctx.hostpython}")
+            hostpython = sh.Command(self.hostpython_location)
+            print(f"Host Python: {self.hostpython_location}")
+            shprint(hostpython, "-m", "build", "--wheel", "--no-isolation", _env=env)
 
             # Install wheel into target python site-packages
             pyver = self.ctx.python_recipe.version[0:4].replace(".", "")
             whl_pattern = f"onnxruntime-{self.version}-cp{pyver}-*.whl"
-            hostpython = sh.Command(self.ctx.hostpython)
+
             shprint(
                 sh.Command(hostpython),
                 "-m",
