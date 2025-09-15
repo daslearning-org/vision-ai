@@ -49,13 +49,13 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DCMAKE_INSTALL_PREFIX={capi_dir}",
             f"-DCMAKE_TOOLCHAIN_FILE={toolchain_file}",
             f"-DANDROID_ABI={arch.arch}",
-            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             "-Donnxruntime_ENABLE_PYTHON=ON",
             "-Donnxruntime_BUILD_SHARED_LIB=OFF",
             "-DPYBIND11_USE_CROSSCOMPILING=TRUE",
             "-Donnxruntime_USE_NNAPI_BUILTIN=ON",
             "-Donnxruntime_USE_XNNPACK=ON",
-            f"-DONNX_CUSTOM_PROTOC_EXECUTABLE={protoc_path}",
+            f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
             "-DCMAKE_BUILD_TYPE=RELEASE"
         ]
