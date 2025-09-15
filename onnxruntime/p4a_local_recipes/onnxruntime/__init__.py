@@ -33,8 +33,9 @@ class OnnxRuntimeRecipe(Recipe):
         cmake_dir = join(build_dir, "cmake")
         capi_dir = join(build_dir, "onnxruntime", "capi")
         dist_dir = join(build_dir, "dist")
-        python_site_packages = self.ctx.get_site_packages_dir(arch)
-        python_include_numpy = join(python_site_packages, 'numpy', 'core', 'include')
+        numpy_site_packages = Recipe.get_recipe("numpy", self.ctx).get_build_dir(arch.arch)
+        print(f"Numpy site packages dir: {numpy_site_packages}")
+        python_include_numpy = join(numpy_site_packages, 'numpy', '_core', 'include')
         toolchain_file = join(self.ctx.ndk_dir,
                                 'build/cmake/android.toolchain.cmake')
         protoc_path = sh.which("protoc")
