@@ -1,10 +1,10 @@
-from pythonforandroid.recipe import CythonRecipe
+from pythonforandroid.recipe import CythonRecipe, Recipe
 from pythonforandroid.toolchain import current_directory, shprint
 from os.path import join
 import sh
 
 
-class OnnxRuntimeRecipe(CythonRecipe):
+class OnnxRuntimeRecipe(Recipe):
     version = "1.22.1"
     url = "https://github.com/microsoft/onnxruntime/archive/refs/tags/v{version}.tar.gz"
 
@@ -28,9 +28,10 @@ class OnnxRuntimeRecipe(CythonRecipe):
         env = self.get_recipe_env(arch)
 
         build_dir = self.get_build_dir(arch.arch)
+        with_build = join(build_dir, "build")
         print(f"Build dir: {build_dir}")
         cmake_dir = join(build_dir, "cmake")
-        capi_dir = join(build_dir, "capi")
+        capi_dir = join(build_dir, "onnxruntime", "capi")
         dist_dir = join(build_dir, "dist")
         python_site_packages = self.ctx.get_site_packages_dir(arch)
         python_include_numpy = join(python_site_packages, 'numpy', 'core', 'include')
@@ -38,6 +39,7 @@ class OnnxRuntimeRecipe(CythonRecipe):
                                 'build/cmake/android.toolchain.cmake')
         protoc_path = sh.which("protoc")
         python_path = sh.which("python3")
+        shprint(sh.mkdir, "-p", with_build)
         shprint(sh.mkdir, "-p", capi_dir)
         shprint(sh.mkdir, "-p", dist_dir)
 
@@ -53,14 +55,13 @@ class OnnxRuntimeRecipe(CythonRecipe):
             "-DPYBIND11_USE_CROSSCOMPILING=TRUE",
             "-Donnxruntime_USE_NNAPI_BUILTIN=ON",
             "-Donnxruntime_USE_XNNPACK=ON",
-            f"-DPYTHON_EXECUTABLE={python_path}",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE={protoc_path}",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
             "-DCMAKE_BUILD_TYPE=RELEASE"
         ]
 
 
-        with current_directory(build_dir):
+        with current_directory(with_build):
             shprint(sh.Command("cmake"), *cmake_args, _env=env)
             #shprint(sh.make, '-j' + str(cpu_count()), _env=env)
             #shprint(sh.make, 'install', _env=env)
@@ -74,26 +75,9 @@ class OnnxRuntimeRecipe(CythonRecipe):
             print(f"Host Python: {self.ctx.hostpython}")
             hostpython = sh.Command(self.hostpython_location)
             print(f"Host Python: {self.hostpython_location}")
-            shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
+            #shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
             shprint("tree", build_dir)
             # Install wheel into target python site-packages
-            pyver = self.ctx.python_recipe.version[0:4].replace(".", "")
-            whl_pattern = f"onnxruntime-{self.version}-cp{pyver}-*.whl"
-            wheels = glob.glob(join(dist_dir, whl_pattern))
-            print(f"Found wheels: {wheels}")
-
-            shprint(
-                sh.Command(python_path),
-                "-m",
-                "pip",
-                "install",
-                "--no-deps",
-                "--prefix",
-                '--target',
-                self.ctx.get_python_install_dir(arch.arch),
-                join(dist_dir, whl_pattern),
-                _env=env,
-            )
 
 
 recipe = OnnxRuntimeRecipe()
