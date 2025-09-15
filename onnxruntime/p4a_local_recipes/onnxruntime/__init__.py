@@ -51,7 +51,7 @@ class OnnxRuntimeRecipe(Recipe):
         cmake_args = [
             "cmake",
             cmake_dir,
-            f"-DCMAKE_INSTALL_PREFIX={capi_dir}",
+            f"-DCMAKE_INSTALL_PREFIX={build_dir}",
             f"-DCMAKE_TOOLCHAIN_FILE={toolchain_file}",
             f"-DANDROID_ABI={arch.arch}",
             #"-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
@@ -61,15 +61,15 @@ class OnnxRuntimeRecipe(Recipe):
             "-Donnxruntime_USE_NNAPI_BUILTIN=ON",
             "-Donnxruntime_USE_XNNPACK=ON",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
-            #f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
-            f"-DPYTHON_NUMPY_INCLUDE_DIRS={python_include_numpy}",
+            f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
+            #f"-DPYTHON_NUMPY_INCLUDE_DIRS={python_include_numpy}",
             f"-DPYTHON_EXECUTABLE={python_path}",
-            "-DPython_NumPy_FOUND=TRUE",
+            #"-DPython_NumPy_FOUND=TRUE",
             "-DCMAKE_BUILD_TYPE=RELEASE",
         ]
 
 
-        with current_directory(with_build):
+        with current_directory(build_dir):
             shprint(sh.Command("cmake"), *cmake_args, _env=env)
             #shprint(sh.make, '-j' + str(cpu_count()), _env=env)
             #shprint(sh.make, 'install', _env=env)
