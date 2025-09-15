@@ -35,7 +35,7 @@ class OnnxRuntimeRecipe(Recipe):
         dist_dir = join(build_dir, "dist")
         numpy_site_packages = Recipe.get_recipe("numpy", self.ctx).get_build_dir(arch.arch)
         print(f"Numpy site packages dir: {numpy_site_packages}")
-        python_include_numpy = join(numpy_site_packages, 'numpy', '_core', 'include')
+        python_include_numpy = join(numpy_site_packages, 'numpy', 'core', 'include')
         toolchain_file = join(self.ctx.ndk_dir,
                                 'build/cmake/android.toolchain.cmake')
         protoc_path = sh.which("protoc")
@@ -50,7 +50,7 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DCMAKE_INSTALL_PREFIX={capi_dir}",
             f"-DCMAKE_TOOLCHAIN_FILE={toolchain_file}",
             f"-DANDROID_ABI={arch.arch}",
-            "-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
+            #"-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             "-Donnxruntime_ENABLE_PYTHON=ON",
             "-Donnxruntime_BUILD_SHARED_LIB=OFF",
             "-DPYBIND11_USE_CROSSCOMPILING=TRUE",
