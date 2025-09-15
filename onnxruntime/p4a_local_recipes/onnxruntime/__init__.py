@@ -43,7 +43,7 @@ class OnnxRuntimeRecipe(Recipe):
         toolchain_file = join(self.ctx.ndk_dir,
                                 'build/cmake/android.toolchain.cmake')
         protoc_path = sh.which("protoc")
-        python_path = sh.which("python3")
+        python_path = self.ctx.hostpython
         shprint(sh.mkdir, "-p", with_build)
         shprint(sh.mkdir, "-p", capi_dir)
         shprint(sh.mkdir, "-p", dist_dir)
@@ -61,8 +61,11 @@ class OnnxRuntimeRecipe(Recipe):
             "-Donnxruntime_USE_NNAPI_BUILTIN=ON",
             "-Donnxruntime_USE_XNNPACK=ON",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
-            f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
-            "-DCMAKE_BUILD_TYPE=RELEASE"
+            #f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
+            f"-DPYTHON_NUMPY_INCLUDE_DIRS={python_include_numpy}",
+            f"-DPYTHON_EXECUTABLE={python_path}",
+            "-DPython_NumPy_FOUND=TRUE",
+            "-DCMAKE_BUILD_TYPE=RELEASE",
         ]
 
 
