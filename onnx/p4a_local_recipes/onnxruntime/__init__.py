@@ -19,8 +19,10 @@ class OnnxRuntimeRecipe(Recipe):
 
     def get_recipe_env(self, arch=None, with_flags_in_cc=True):
         env = super().get_recipe_env(arch, with_flags_in_cc)
-        env['CPPFLAGS'] += ' -Wno-unused-variable'
-        env["PYTHON_INCLUDE_DIR"] = self.ctx.python_recipe.include_root(arch)
+        python_include_dir = self.ctx.python_recipe.include_root(arch.arch)
+        print(f"Python include dir: {python_include_dir}")
+        env['CPPFLAGS'] += f' -Wno-unused-variable -I{python_include_dir}'
+        env["PYTHON_INCLUDE_DIR"] = python_include_dir
 
         # Make sure cross python/protoc are visible
         print(f"Host Python: {self.ctx.hostpython}")
