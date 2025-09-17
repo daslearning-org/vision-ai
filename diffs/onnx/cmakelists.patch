@@ -1,0 +1,10 @@
+--- CMakeLists.txt	2025-09-17 06:25:16.496233897 +0000
++++ CMakeLists_patch.txt	2025-09-17 06:26:56.207486707 +0000
+@@ -677,6 +677,7 @@
+     if (onnxruntime_REQUIRE_PYTHON_EMBED_LIB)
+       find_package(Python 3.10 COMPONENTS Interpreter Development NumPy)
+     else()
++      find_package(Python 3.10 COMPONENTS Development)
+       find_package(Python 3.10 COMPONENTS Interpreter Development.Module NumPy)
+     endif()
+     message("Numpy version: ${Python_NumPy_VERSION}")

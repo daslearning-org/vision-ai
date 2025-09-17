@@ -2,7 +2,7 @@ from pythonforandroid.recipe import CythonRecipe, Recipe
 from pythonforandroid.toolchain import current_directory, shprint
 from os.path import join
 import sh
-
+from multiprocessing import cpu_count
 
 class OnnxRuntimeRecipe(Recipe):
     version = "1.22.1"
@@ -10,8 +10,9 @@ class OnnxRuntimeRecipe(Recipe):
 
     depends = ["setuptools", "wheel", "numpy", "protobuf"]
     patches = [
-                'patches/onnx_numpy.patch',
-                'patches/mlasi_bfloat.patch',
+        'patches/onnx_numpy.patch',
+        'patches/mlasi_bfloat.patch',
+        'patches/cmakelists.patch',
     ]
     # Build in source like your Termux build
     build_in_src = True
@@ -36,9 +37,9 @@ class OnnxRuntimeRecipe(Recipe):
         cmake_dir = join(build_dir, "cmake")
         capi_dir = join(build_dir, "onnxruntime", "capi")
         dist_dir = join(build_dir, "dist")
-        numpy_build_dir = Recipe.get_recipe("numpy", self.ctx).get_build_dir(arch.arch)
-        print(f"Numpy build dir: {numpy_build_dir}")
-        #python_include_numpy = join(numpy_build_dir, 'numpy', 'core', 'include') # from build dir
+        py_build_dir = Recipe.get_recipe("hostpython3", self.ctx).get_build_dir(arch.arch)
+        print(f"Python build dir: {py_build_dir}")
+        python_include_dir = join(py_build_dir, 'Include') # from build dir
         python_site_packages = self.ctx.get_site_packages_dir(arch)
         python_include_numpy = join(python_site_packages,
                                         'numpy', 'core', 'include') # from python-installs dir
@@ -66,6 +67,9 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
             f"-DPYTHON_EXECUTABLE={python_path}",
+            f"-DPYTHON_INCLUDE_DIR={python_include_dir}",
+            f"-DPython_INCLUDE_DIRS={python_include_dir}",
+            "-DPython_FOUND=TRUE",
             #"-DPython_NumPy_FOUND=TRUE",
             "-DCMAKE_BUILD_TYPE=RELEASE",
         ]
@@ -73,10 +77,10 @@ class OnnxRuntimeRecipe(Recipe):
 
         with current_directory(build_dir):
             shprint(sh.Command("cmake"), *cmake_args, _env=env)
-            #shprint(sh.make, '-j' + str(cpu_count()), _env=env)
+            shprint(sh.make, '-j' + str(cpu_count()), _env=env)
             #shprint(sh.make, 'install', _env=env)
-            shprint(sh.Command("cmake"), "--build", ".", _env=env)
-            shprint(sh.Command("cmake"), "--install", ".", _env=env)
+            #shprint(sh.Command("cmake"), "--build", ".", _env=env)
+            #shprint(sh.Command("cmake"), "--install", ".", _env=env)
 
             print("=== Installed capi contents ===")
             shprint(sh.ls, "-R", capi_dir)
