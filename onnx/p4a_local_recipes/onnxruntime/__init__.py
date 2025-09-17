@@ -1,6 +1,6 @@
 from pythonforandroid.recipe import CythonRecipe, Recipe
 from pythonforandroid.toolchain import current_directory, shprint
-from os.path import join
+from os.path import join, exists
 import sh
 from multiprocessing import cpu_count
 
@@ -44,7 +44,7 @@ class OnnxRuntimeRecipe(Recipe):
         #python_include_dir = join(py_build_dir, 'Include') # from build dir
         python_include_dir = self.ctx.python_recipe.include_root(arch.arch)
         print(f"Python include dir: {python_include_dir}")
-        print(f"Does Python.h exist? {os.path.exists(join(python_include_dir, 'Python.h'))}")
+        print(f"Does Python.h exist? {exists(join(python_include_dir, 'Python.h'))}")
         python_site_packages = self.ctx.get_site_packages_dir(arch)
         python_include_numpy = join(python_site_packages,
                                         'numpy', 'core', 'include') # from python-installs dir
