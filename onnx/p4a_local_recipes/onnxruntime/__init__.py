@@ -9,7 +9,10 @@ class OnnxRuntimeRecipe(Recipe):
     url = "https://github.com/microsoft/onnxruntime/archive/refs/tags/v{version}.tar.gz"
 
     depends = ["setuptools", "wheel", "numpy", "protobuf"]
-    patches = ['patches/onnx_numpy.patch']
+    patches = [
+                'patches/onnx_numpy.patch',
+                'patches/mlasi_bfloat.patch',
+    ]
     # Build in source like your Termux build
     build_in_src = True
 
