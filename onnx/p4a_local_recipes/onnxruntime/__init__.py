@@ -22,6 +22,8 @@ class OnnxRuntimeRecipe(Recipe):
         python_include_dir = self.ctx.python_recipe.include_root(arch.arch)
         print(f"Python include dir: {python_include_dir}")
         env['CPPFLAGS'] += f' -Wno-unused-variable -I{python_include_dir}'
+        env['CXXFLAGS'] += f' -I{python_include_dir}'
+        env['CFLAGS'] += f' -I{python_include_dir}'
         env["PYTHON_INCLUDE_DIR"] = python_include_dir
 
         # Make sure cross python/protoc are visible
@@ -78,6 +80,10 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DPYTHON_INCLUDE_DIR=/usr/include/python3.11",
             f"-DPython_INCLUDE_DIRS=/usr/include/python3.11",
             f"-DPYTHON_INCLUDE_DIRS=/usr/include/python3.11",
+            f"-DPYBIND11_PYTHON_VERSION=3.11",
+            f"-DPYBIND11_INCLUDE_DIR={python_include_dir}",
+            "-DPYBIND11_NOPYTHON=OFF",
+            "-DPython_FOUND=TRUE",
             "-DCMAKE_BUILD_TYPE=RELEASE",
         ]
 
