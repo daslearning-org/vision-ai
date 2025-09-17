@@ -72,10 +72,10 @@ class OnnxRuntimeRecipe(Recipe):
             "-Donnxruntime_USE_XNNPACK=ON",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
-            f"-DPYTHON_EXECUTABLE={python_path}",
-            f"-DPYTHON_INCLUDE_DIR={python_include_dir}",
-            f"-DPython_INCLUDE_DIRS={python_include_dir}",
-            f"-DPYTHON_INCLUDE_DIRS={python_include_dir}",
+            f"-DPYTHON_EXECUTABLE=/usr/bin/python3",
+            f"-DPYTHON_INCLUDE_DIR=/usr/include/python3.11",
+            f"-DPython_INCLUDE_DIRS=/usr/include/python3.11",
+            f"-DPYTHON_INCLUDE_DIRS=/usr/include/python3.11",
             "-DCMAKE_BUILD_TYPE=RELEASE",
         ]
 
