@@ -3,7 +3,7 @@ We will use different small Offline AI models to perform some tasks like object 
 
 ### Must include
 ```bash
-sudo apt install -y ant autoconf automake ccache cmake g++ gcc lbzip2 libffi-dev libltdl-dev libtool libssl-dev make openjdk-17-jdk patch patchelf pkg-config ninja-build libbz2-dev
+sudo apt install -y ant autoconf automake ccache cmake g++ gcc libbz2-dev libffi-dev libltdl-dev libtool libssl-dev lbzip2 make ninja-build openjdk-17-jdk patch patchelf pkg-config protobuf-compiler
 
 # python part 3.11
 sudo apt install software-properties-common

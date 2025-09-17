@@ -8,7 +8,7 @@ class OnnxRuntimeRecipe(Recipe):
     version = "1.22.1"
     url = "https://github.com/microsoft/onnxruntime/archive/refs/tags/v{version}.tar.gz"
 
-    depends = ["setuptools", "wheel", "numpy", "protobuf"]
+    depends = ["setuptools", "wheel", 'pybind11', "numpy", "protobuf"]
     patches = [
         'patches/onnx_numpy.patch',
         'patches/mlasi_bfloat.patch',
@@ -20,6 +20,7 @@ class OnnxRuntimeRecipe(Recipe):
     def get_recipe_env(self, arch=None, with_flags_in_cc=True):
         env = super().get_recipe_env(arch, with_flags_in_cc)
         env['CPPFLAGS'] += ' -Wno-unused-variable'
+        env["PYTHON_INCLUDE_DIR"] = self.ctx.python_recipe.include_root(arch)
 
         # Make sure cross python/protoc are visible
         print(f"Host Python: {self.ctx.hostpython}")
@@ -30,6 +31,7 @@ class OnnxRuntimeRecipe(Recipe):
         super().build_arch(arch)
 
         env = self.get_recipe_env(arch)
+        ANDROID_PLATFORM = str(self.ctx.ndk_api)
 
         build_dir = self.get_build_dir(arch.arch)
         with_build = join(build_dir, "build")
@@ -39,7 +41,10 @@ class OnnxRuntimeRecipe(Recipe):
         dist_dir = join(build_dir, "dist")
         py_build_dir = Recipe.get_recipe("hostpython3", self.ctx).get_build_dir(arch.arch)
         print(f"Python build dir: {py_build_dir}")
-        python_include_dir = join(py_build_dir, 'Include') # from build dir
+        #python_include_dir = join(py_build_dir, 'Include') # from build dir
+        python_include_dir = self.ctx.python_recipe.include_root(arch.arch)
+        print(f"Python include dir: {python_include_dir}")
+        print(f"Does Python.h exist? {os.path.exists(join(python_include_dir, 'Python.h'))}")
         python_site_packages = self.ctx.get_site_packages_dir(arch)
         python_include_numpy = join(python_site_packages,
                                         'numpy', 'core', 'include') # from python-installs dir
@@ -58,6 +63,7 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DCMAKE_INSTALL_PREFIX={build_dir}",
             f"-DCMAKE_TOOLCHAIN_FILE={toolchain_file}",
             f"-DANDROID_ABI={arch.arch}",
+            f"-DANDROID_PLATFORM={ANDROID_PLATFORM}",
             #"-DCMAKE_POLICY_VERSION_MINIMUM=3.5",
             "-Donnxruntime_ENABLE_PYTHON=ON",
             "-Donnxruntime_BUILD_SHARED_LIB=OFF",
@@ -69,11 +75,9 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DPYTHON_EXECUTABLE={python_path}",
             f"-DPYTHON_INCLUDE_DIR={python_include_dir}",
             f"-DPython_INCLUDE_DIRS={python_include_dir}",
-            "-DPython_FOUND=TRUE",
-            #"-DPython_NumPy_FOUND=TRUE",
+            f"-DPYTHON_INCLUDE_DIRS={python_include_dir}",
             "-DCMAKE_BUILD_TYPE=RELEASE",
         ]
-
 
         with current_directory(build_dir):
             shprint(sh.Command("cmake"), *cmake_args, _env=env)
@@ -92,6 +96,5 @@ class OnnxRuntimeRecipe(Recipe):
             #shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
             shprint("tree", build_dir)
             # Install wheel into target python site-packages
-
 
 recipe = OnnxRuntimeRecipe()
