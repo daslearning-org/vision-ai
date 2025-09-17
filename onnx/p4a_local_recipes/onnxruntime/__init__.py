@@ -9,7 +9,7 @@ class OnnxRuntimeRecipe(Recipe):
     url = "https://github.com/microsoft/onnxruntime/archive/refs/tags/v{version}.tar.gz"
 
     depends = ["setuptools", "wheel", "numpy", "protobuf"]
-
+    patches = ['patches/onnx_numpy.patch']
     # Build in source like your Termux build
     build_in_src = True
 
@@ -35,10 +35,10 @@ class OnnxRuntimeRecipe(Recipe):
         dist_dir = join(build_dir, "dist")
         numpy_build_dir = Recipe.get_recipe("numpy", self.ctx).get_build_dir(arch.arch)
         print(f"Numpy build dir: {numpy_build_dir}")
-        #python_include_numpy = join(numpy_site_packages, 'numpy', 'core', 'include')
+        #python_include_numpy = join(numpy_build_dir, 'numpy', 'core', 'include') # from build dir
         python_site_packages = self.ctx.get_site_packages_dir(arch)
         python_include_numpy = join(python_site_packages,
-                                        'numpy', 'core', 'include')
+                                        'numpy', 'core', 'include') # from python-installs dir
         print(f"Python include numpy: {python_include_numpy}")
         toolchain_file = join(self.ctx.ndk_dir,
                                 'build/cmake/android.toolchain.cmake')
@@ -62,7 +62,6 @@ class OnnxRuntimeRecipe(Recipe):
             "-Donnxruntime_USE_XNNPACK=ON",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
-            #f"-DPYTHON_NUMPY_INCLUDE_DIRS={python_include_numpy}",
             f"-DPYTHON_EXECUTABLE={python_path}",
             #"-DPython_NumPy_FOUND=TRUE",
             "-DCMAKE_BUILD_TYPE=RELEASE",
