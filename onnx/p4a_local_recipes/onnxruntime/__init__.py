@@ -2,17 +2,17 @@ from pythonforandroid.recipe import CythonRecipe, Recipe
 from pythonforandroid.toolchain import current_directory, shprint
 from os.path import join, exists
 import sh
+import shutil
 from multiprocessing import cpu_count
 
 class OnnxRuntimeRecipe(Recipe):
     version = "1.22.1"
     url = "https://github.com/microsoft/onnxruntime/archive/refs/tags/v{version}.tar.gz"
 
-    depends = ["setuptools", "wheel", 'pybind11', "numpy", "protobuf"]
+    depends = ["setuptools", "wheel", "numpy", "protobuf"]
     patches = [
         'patches/onnx_numpy.patch',
         'patches/mlasi_bfloat.patch',
-        'patches/cmakelists.patch',
     ]
     # Build in source like your Termux build
     build_in_src = True
@@ -24,7 +24,7 @@ class OnnxRuntimeRecipe(Recipe):
         env['CPPFLAGS'] += f' -Wno-unused-variable -I{python_include_dir}'
         env['CXXFLAGS'] += f' -I{python_include_dir}'
         env['CFLAGS'] += f' -I{python_include_dir}'
-        env["PYTHON_INCLUDE_DIR"] = python_include_dir
+        env["Python_INCLUDE_DIRS"] = python_include_dir
 
         # Make sure cross python/protoc are visible
         print(f"Host Python: {self.ctx.hostpython}")
@@ -49,6 +49,10 @@ class OnnxRuntimeRecipe(Recipe):
         python_include_dir = self.ctx.python_recipe.include_root(arch.arch)
         print(f"Python include dir: {python_include_dir}")
         print(f"Does Python.h exist? {exists(join(python_include_dir, 'Python.h'))}")
+        python_link_root = self.ctx.python_recipe.link_root(arch.arch)
+        python_link_version = self.ctx.python_recipe.link_version
+        python_library = join(python_link_root,
+                              'libpython{}.so'.format(python_link_version))
         python_site_packages = self.ctx.get_site_packages_dir(arch)
         python_include_numpy = join(python_site_packages,
                                         'numpy', 'core', 'include') # from python-installs dir
@@ -57,7 +61,7 @@ class OnnxRuntimeRecipe(Recipe):
                                 'build/cmake/android.toolchain.cmake')
         protoc_path = sh.which("protoc")
         python_path = self.ctx.hostpython
-        shprint(sh.mkdir, "-p", with_build)
+        #shprint(sh.mkdir, "-p", with_build)
         shprint(sh.mkdir, "-p", capi_dir)
         shprint(sh.mkdir, "-p", dist_dir)
 
@@ -76,14 +80,11 @@ class OnnxRuntimeRecipe(Recipe):
             "-Donnxruntime_USE_XNNPACK=ON",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
-            f"-DPYTHON_EXECUTABLE=/usr/bin/python3",
-            f"-DPYTHON_INCLUDE_DIR=/usr/include/python3.11",
-            f"-DPython_INCLUDE_DIRS=/usr/include/python3.11",
-            f"-DPYTHON_INCLUDE_DIRS=/usr/include/python3.11",
-            f"-DPYBIND11_PYTHON_VERSION=3.11",
-            f"-DPYBIND11_INCLUDE_DIR={python_include_dir}",
-            "-DPYBIND11_NOPYTHON=OFF",
-            "-DPython_FOUND=TRUE",
+            f"-DPython_EXECUTABLE={python_path}",
+            f"-DPYTHON_EXECUTABLE={python_path}",
+            f"-DPython3_EXECUTABLE={python_path}"
+            f"-DPython_INCLUDE_DIR={python_include_dir}",
+            f"-DPython_INCLUDE_DIRS={python_include_dir}",
             "-DCMAKE_BUILD_TYPE=RELEASE",
         ]
 
@@ -98,9 +99,9 @@ class OnnxRuntimeRecipe(Recipe):
             shprint(sh.ls, "-R", capi_dir)
             # Build wheel
             hostpython = sh.Command(self.ctx.hostpython)
-            print(f"Host Python: {self.ctx.hostpython}")
+            print(f"Host Python 1: {hostpython}")
             hostpython = sh.Command(self.hostpython_location)
-            print(f"Host Python: {self.hostpython_location}")
+            print(f"Host Python 2: {hostpython}")
             #shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
             shprint("tree", build_dir)
             # Install wheel into target python site-packages
