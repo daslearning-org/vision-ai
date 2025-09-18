@@ -85,6 +85,7 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DPython3_EXECUTABLE={python_path}"
             f"-DPython_INCLUDE_DIR={python_include_dir}",
             f"-DPython_INCLUDE_DIRS={python_include_dir}",
+            f"-DPython_LIBRARIES={python_library}",
             "-DCMAKE_BUILD_TYPE=RELEASE",
         ]
 
