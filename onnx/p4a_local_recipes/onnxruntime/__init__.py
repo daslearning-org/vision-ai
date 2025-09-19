@@ -87,6 +87,7 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DPython_INCLUDE_DIRS={python_include_dir}",
             f"-DPython_LIBRARIES={python_library}",
             "-DCMAKE_BUILD_TYPE=RELEASE",
+            "-Donnxruntime_BUILD_UNIT_TESTS=OFF",
         ]
 
         with current_directory(build_dir):
