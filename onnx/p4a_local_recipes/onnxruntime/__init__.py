@@ -11,7 +11,7 @@ class OnnxRuntimeRecipe(Recipe):
 
     depends = ["setuptools", "wheel", "numpy", "protobuf", "pybind11"]
     patches = [
-        #'patches/onnx_numpy.patch',
+        'patches/onnx_numpy.patch',
         'patches/mlasi_bfloat.patch',
     ]
     # Build in source like your Termux build
@@ -85,7 +85,7 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
             f"-DPython_EXECUTABLE={python_path}",
             f"-DPython3_EXECUTABLE={python_path}",
-            f"-Dpybind11_INCLUDE_DIRS={pybind11_include_dir};{python_include_dir}",
+            f"-Dpybind11_INCLUDE_DIRS={pybind11_include_dir};{python_include_dir};{python_include_numpy}",
             #f"-DPython_INCLUDE_DIR={python_include_dir}",
             #f"-DPython_INCLUDE_DIRS={python_include_dir}",
             #f"-DPython_LIBRARIES={python_library}",
