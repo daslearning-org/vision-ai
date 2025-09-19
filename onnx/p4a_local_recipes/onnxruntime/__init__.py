@@ -9,7 +9,7 @@ class OnnxRuntimeRecipe(Recipe):
     version = "1.22.1"
     url = "https://github.com/microsoft/onnxruntime/archive/refs/tags/v{version}.tar.gz"
 
-    depends = ["setuptools", "wheel", "numpy", "protobuf"]
+    depends = ["setuptools", "wheel", "numpy", "protobuf", "pybind11"]
     patches = [
         'patches/onnx_numpy.patch',
         'patches/mlasi_bfloat.patch',
@@ -48,6 +48,8 @@ class OnnxRuntimeRecipe(Recipe):
         print(f"Python build dir: {py_build_dir}")
         #python_include_dir = join(py_build_dir, 'Include') # from build dir
         python_include_dir = self.ctx.python_recipe.include_root(arch.arch)
+        pybind11_recipe = self.get_recipe('pybind11', self.ctx)
+        pybind11_include_dir = pybind11_recipe.get_include_dir(arch)
         print(f"Python include dir: {python_include_dir}")
         print(f"Does Python.h exist? {exists(join(python_include_dir, 'Python.h'))}")
         python_link_root = self.ctx.python_recipe.link_root(arch.arch)
@@ -81,9 +83,9 @@ class OnnxRuntimeRecipe(Recipe):
             "-Donnxruntime_USE_XNNPACK=ON",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
-            f"-DPython_EXECUTABLE={sys.executable}",
-            f"-DPython3_EXECUTABLE={sys.executable}"
-            f"-Dpybind11_INCLUDE_DIRS={python_include_dir}"
+            f"-DPython_EXECUTABLE={python_path}",
+            f"-DPython3_EXECUTABLE={python_path}"
+            f"-Dpybind11_INCLUDE_DIRS={pybind11_include_dir};{python_include_dir}"
             #f"-DPython_INCLUDE_DIR={python_include_dir}",
             #f"-DPython_INCLUDE_DIRS={python_include_dir}",
             #f"-DPython_LIBRARIES={python_library}",
