@@ -97,7 +97,7 @@ if (MSVC AND NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 onnxruntime_add_include_to_target(onnxruntime_pybind11_state Python::Module)
-target_include_directories(onnxruntime_pybind11_state PRIVATE ${ONNXRUNTIME_ROOT} ${pybind11_INCLUDE_DIRS} ${PYTHON_CUSTOM_INCLUDE})
+target_include_directories(onnxruntime_pybind11_state PRIVATE ${ONNXRUNTIME_ROOT} ${pybind11_INCLUDE_DIRS})
 if(onnxruntime_USE_CUDA)
     target_include_directories(onnxruntime_pybind11_state PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${CUDNN_INCLUDE_DIR})
 endif()
@@ -205,7 +205,8 @@ target_link_libraries(onnxruntime_pybind11_state PRIVATE
     onnxruntime_common
     onnxruntime_flatbuffers
     ${pybind11_lib}
-    ${Python_NumPy_INCLUDE_DIR}
+    Python::NumPy
+    ${Python_LIBRARIES}
 )
 set(onnxruntime_pybind11_state_dependencies
     ${onnxruntime_EXTERNAL_DEPENDENCIES}

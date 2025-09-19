@@ -88,7 +88,8 @@ class OnnxRuntimeRecipe(Recipe):
             f"-Dpybind11_INCLUDE_DIRS={pybind11_include_dir};{python_include_dir};{python_include_numpy}",
             #f"-DPython_INCLUDE_DIR={python_include_dir}",
             #f"-DPython_INCLUDE_DIRS={python_include_dir}",
-            #f"-DPython_LIBRARIES={python_library}",
+            f"-DPython_LIBRARY={python_library}",
+            f"-DPython_LIBRARIES={python_library}",
             "-DCMAKE_BUILD_TYPE=RELEASE",
             "-Donnxruntime_BUILD_UNIT_TESTS=OFF",
         ]

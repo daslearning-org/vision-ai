@@ -1,11 +1,10 @@
 --- a/cmake/onnxruntime_python.cmake
 +++ b/cmake/onnxruntime_python_patch.cmake
-@@ -205,7 +205,7 @@
-     onnxruntime_common
+@@ -206,6 +206,7 @@
      onnxruntime_flatbuffers
      ${pybind11_lib}
--    Python::NumPy
-+    ${Python_NumPy_INCLUDE_DIR}
+     Python::NumPy
++    ${Python_LIBRARIES}
  )
  set(onnxruntime_pybind11_state_dependencies
      ${onnxruntime_EXTERNAL_DEPENDENCIES}
