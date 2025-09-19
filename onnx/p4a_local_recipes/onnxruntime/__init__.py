@@ -43,6 +43,7 @@ class OnnxRuntimeRecipe(Recipe):
         cmake_dir = join(build_dir, "cmake")
         capi_dir = join(build_dir, "onnxruntime", "capi")
         dist_dir = join(build_dir, "dist")
+        onnx_pybind_dir = join(build_dir, "_deps", "pybind11_project-src", "include", "pybind11", "detail")
         py_build_dir = Recipe.get_recipe("hostpython3", self.ctx).get_build_dir(arch.arch)
         print(f"Python build dir: {py_build_dir}")
         #python_include_dir = join(py_build_dir, 'Include') # from build dir
@@ -61,9 +62,13 @@ class OnnxRuntimeRecipe(Recipe):
                                 'build/cmake/android.toolchain.cmake')
         protoc_path = sh.which("protoc")
         python_path = self.ctx.hostpython
-        #shprint(sh.mkdir, "-p", with_build)
+        shprint(sh.mkdir, "-p", onnx_pybind_dir)
         shprint(sh.mkdir, "-p", capi_dir)
         shprint(sh.mkdir, "-p", dist_dir)
+
+        # copy python include dir to onnx_pybind_dir
+        print(f"Copying {python_include_dir} to {onnx_pybind_dir}")
+        shutil.copytree(python_include_dir, onnx_pybind_dir)
 
         cmake_args = [
             "cmake",
