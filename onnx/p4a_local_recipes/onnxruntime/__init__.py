@@ -1,7 +1,7 @@
 from pythonforandroid.recipe import CythonRecipe, Recipe
 from pythonforandroid.toolchain import current_directory, shprint
 from os.path import join, exists
-import sh
+import sh, sys
 import shutil
 from multiprocessing import cpu_count
 
@@ -62,13 +62,9 @@ class OnnxRuntimeRecipe(Recipe):
                                 'build/cmake/android.toolchain.cmake')
         protoc_path = sh.which("protoc")
         python_path = self.ctx.hostpython
-        shprint(sh.mkdir, "-p", onnx_pybind_dir)
+        #shprint(sh.mkdir, "-p", onnx_pybind_dir)
         shprint(sh.mkdir, "-p", capi_dir)
         shprint(sh.mkdir, "-p", dist_dir)
-
-        # copy python include dir to onnx_pybind_dir
-        print(f"Copying {python_include_dir} to {onnx_pybind_dir}")
-        shutil.copytree(python_include_dir, onnx_pybind_dir)
 
         cmake_args = [
             "cmake",
@@ -85,12 +81,12 @@ class OnnxRuntimeRecipe(Recipe):
             "-Donnxruntime_USE_XNNPACK=ON",
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
-            f"-DPython_EXECUTABLE={python_path}",
-            f"-DPYTHON_EXECUTABLE={python_path}",
-            f"-DPython3_EXECUTABLE={python_path}"
-            f"-DPython_INCLUDE_DIR={python_include_dir}",
-            f"-DPython_INCLUDE_DIRS={python_include_dir}",
-            f"-DPython_LIBRARIES={python_library}",
+            f"-DPython_EXECUTABLE={sys.executable}",
+            f"-DPython3_EXECUTABLE={sys.executable}"
+            f"-Dpybind11_INCLUDE_DIRS={python_include_dir}"
+            #f"-DPython_INCLUDE_DIR={python_include_dir}",
+            #f"-DPython_INCLUDE_DIRS={python_include_dir}",
+            #f"-DPython_LIBRARIES={python_library}",
             "-DCMAKE_BUILD_TYPE=RELEASE",
             "-Donnxruntime_BUILD_UNIT_TESTS=OFF",
         ]

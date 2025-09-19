@@ -97,7 +97,7 @@ if (MSVC AND NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 onnxruntime_add_include_to_target(onnxruntime_pybind11_state Python::Module)
-target_include_directories(onnxruntime_pybind11_state PRIVATE ${ONNXRUNTIME_ROOT} ${pybind11_INCLUDE_DIRS})
+target_include_directories(onnxruntime_pybind11_state PRIVATE ${ONNXRUNTIME_ROOT} ${pybind11_INCLUDE_DIRS} ${PYTHON_CUSTOM_INCLUDE})
 if(onnxruntime_USE_CUDA)
     target_include_directories(onnxruntime_pybind11_state PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${CUDNN_INCLUDE_DIR})
 endif()
