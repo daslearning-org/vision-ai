@@ -205,7 +205,6 @@ target_link_libraries(onnxruntime_pybind11_state PRIVATE
     onnxruntime_common
     onnxruntime_flatbuffers
     ${pybind11_lib}
-    Python::NumPy
     ${Python_LIBRARIES}
 )
 set(onnxruntime_pybind11_state_dependencies
