@@ -2,7 +2,6 @@ from pythonforandroid.recipe import PyProjectRecipe, Recipe
 from pythonforandroid.toolchain import current_directory, shprint
 from os.path import join, exists
 import sh, sys
-import shutil
 from multiprocessing import cpu_count
 
 class OnnxRuntimeRecipe(PyProjectRecipe):
@@ -14,7 +13,6 @@ class OnnxRuntimeRecipe(PyProjectRecipe):
         'patches/onnx_numpy.patch',
         'patches/mlasi_bfloat.patch',
     ]
-    # Build in source like your Termux build
     build_in_src = True
 
     def get_recipe_env(self, arch=None):
@@ -88,14 +86,9 @@ class OnnxRuntimeRecipe(PyProjectRecipe):
         ]
 
         with current_directory(build_dir):
+            # Build the cmake part before building the wheel
             shprint(sh.Command("cmake"), *cmake_args, _env=env)
             shprint(sh.make, '-j' + str(cpu_count()), _env=env)
-            #shprint(sh.make, 'install', _env=env)
-            #shprint(sh.Command("cmake"), "--build", ".", _env=env)
-            #shprint(sh.Command("cmake"), "--install", ".", _env=env)
-
-            # Build wheel
-            #shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
 
         # Build & Install wheel into target python site-packages
         super().build_arch(arch)
