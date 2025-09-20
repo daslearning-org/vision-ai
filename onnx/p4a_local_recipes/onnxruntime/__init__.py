@@ -84,7 +84,6 @@ class OnnxRuntimeRecipe(Recipe):
             f"-DONNX_CUSTOM_PROTOC_EXECUTABLE=/usr/bin/protoc",
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
             f"-DPython_EXECUTABLE={python_path}",
-            f"-DPython3_EXECUTABLE={python_path}",
             f"-Dpybind11_INCLUDE_DIRS={pybind11_include_dir};{python_include_dir};{python_include_numpy}",
             #f"-DPython_INCLUDE_DIR={python_include_dir}",
             #f"-DPython_INCLUDE_DIRS={python_include_dir}",
@@ -104,12 +103,8 @@ class OnnxRuntimeRecipe(Recipe):
             print("=== Installed capi contents ===")
             shprint(sh.ls, "-R", capi_dir)
             # Build wheel
-            hostpython = sh.Command(self.ctx.hostpython)
-            print(f"Host Python 1: {hostpython}")
-            hostpython = sh.Command(self.hostpython_location)
-            print(f"Host Python 2: {hostpython}")
             #shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
-            shprint("tree", build_dir)
+
             # Install wheel into target python site-packages
 
 recipe = OnnxRuntimeRecipe()
