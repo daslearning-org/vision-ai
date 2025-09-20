@@ -1,11 +1,11 @@
-from pythonforandroid.recipe import CythonRecipe, Recipe
+from pythonforandroid.recipe import PyProjectRecipe, Recipe
 from pythonforandroid.toolchain import current_directory, shprint
 from os.path import join, exists
 import sh, sys
 import shutil
 from multiprocessing import cpu_count
 
-class OnnxRuntimeRecipe(Recipe):
+class OnnxRuntimeRecipe(PyProjectRecipe):
     version = "1.22.1"
     url = "https://github.com/microsoft/onnxruntime/archive/refs/tags/v{version}.tar.gz"
 
@@ -32,7 +32,6 @@ class OnnxRuntimeRecipe(Recipe):
         return env
 
     def build_arch(self, arch):
-        super().build_arch(arch)
 
         env = self.get_recipe_env(arch)
         ANDROID_PLATFORM = str(self.ctx.ndk_api)
@@ -105,6 +104,7 @@ class OnnxRuntimeRecipe(Recipe):
             # Build wheel
             #shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
 
-            # Install wheel into target python site-packages
+        # Build & Install wheel into target python site-packages
+        super().build_arch(arch)
 
 recipe = OnnxRuntimeRecipe()
