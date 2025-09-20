@@ -1,6 +1,7 @@
 # main_layout.kv
 ## import local components
 #:import ImgObjDetBox screens.img_obj_detect.ImgObjDetBox
+#:import SettingsBox screens.setting.SettingsBox
 
 <DrawerClickableItem@MDNavigationDrawerItem>
     focus_color: "#e7e4c0"
@@ -62,16 +63,13 @@ MDScreen:
 
                 MDScreen:
                     name: "imgObjDetect"
-
                     ImgObjDetBox:
                         id: img_detect_box
 
                 MDScreen:
                     name: "settings"
-
-                    MDLabel:
-                        text: "To be added later.."
-                        halign: "center"
+                    SettingsBox:
+                        id: settings_scroll
 
             MDNavigationDrawer:
                 id: nav_drawer

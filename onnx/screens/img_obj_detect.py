@@ -68,7 +68,7 @@ Builder.load_string('''
             md_bg_color: '#333036'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.2
-            #on_release: app.reset_object_detect()
+            on_release: app.reset_object_detect()
 
     BoxLayout: # converted image
         size_hint_y: 0.5

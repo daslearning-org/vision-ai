@@ -15,16 +15,19 @@ from kivymd.app import MDApp
 from kivymd.uix.navigationdrawer import MDNavigationDrawerMenu
 from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.label import MDLabel
+from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton
 
 # IMPORTANT: Set this property for keyboard behavior
 Window.softinput_mode = "below_target"
 
 # Import your local screen classes & modules
 from screens.img_obj_detect import ImgObjDetBox, TempSpinWait
+from screens.setting import SettingsBox
 from onnx_vision import OnnxDetect
 
 ## Global definitions
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 # Determine the base path for your application's resources
 if getattr(sys, 'frozen', False):
     # Running as a PyInstaller bundle
@@ -133,6 +136,18 @@ class VisionAiApp(MDApp):
             duration=3
         ).open()
 
+    def show_text_dialog(self, title, text="", buttons=[]):
+        self.txt_dialog = MDDialog(
+            title=title,
+            text=text,
+            buttons=buttons
+        )
+        self.txt_dialog.open()
+
+    def txt_dialog_closer(self, instance):
+        if self.txt_dialog:
+            self.txt_dialog.dismiss()
+
     def open_img_file_manager(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
         if self.is_onnx_running:
@@ -153,6 +168,8 @@ class VisionAiApp(MDApp):
             fit_mode = "contain"
         )
         uploaded_image_box.add_widget(fitImage)
+        result_box = self.root.ids.img_detect_box.ids.result_image
+        result_box.clear_widgets()
         self.img_file_exit_manager()
 
     def img_file_exit_manager(self, *args):
@@ -190,6 +207,79 @@ class VisionAiApp(MDApp):
             result_box.add_widget(fitImage)
         else:
             self.show_toast_msg(message, is_error=True)
+
+    def reset_object_detect(self):
+        self.image_path = ""
+        uploaded_image_box = self.root.ids.img_detect_box.ids.uploaded_image
+        uploaded_image_box.clear_widgets()
+        result_box = self.root.ids.img_detect_box.ids.result_image
+        result_box.clear_widgets()
+
+    def open_link(self, instance, url):
+        import webbrowser
+        webbrowser.open(url)
+
+    def update_link_open(self, instance):
+        self.txt_dialog_closer(instance)
+        self.open_link(instance=instance, url="https://github.com/daslearning-org/vision-ai/releases")
+
+    def update_checker(self, instance):
+        buttons = [
+            MDFlatButton(
+                text="Cancel",
+                theme_text_color="Custom",
+                text_color=self.theme_cls.primary_color,
+                on_release=self.txt_dialog_closer
+            ),
+            MDFlatButton(
+                text="Releases",
+                theme_text_color="Custom",
+                text_color="green",
+                on_release=self.update_link_open
+            ),
+        ]
+        self.show_text_dialog(
+            "Check for update",
+            f"Your version: {__version__}",
+            buttons
+        )
+
+    def show_delete_alert(self):
+        op_img_count = 0
+        for filename in os.listdir(self.op_dir):
+            if filename.endswith(".jpg") or filename.endswith(".jpeg") or filename.endswith(".png"):
+                op_img_count += 1
+        self.show_text_dialog(
+            title="Delete all output files?",
+            text=f"There are total: {op_img_count} image files. This action cannot be undone!",
+            buttons=[
+                MDFlatButton(
+                    text="CANCEL",
+                    theme_text_color="Custom",
+                    text_color=self.theme_cls.primary_color,
+                    on_release=self.txt_dialog_closer
+                ),
+                MDFlatButton(
+                    text="DELETE",
+                    theme_text_color="Custom",
+                    text_color="red",
+                    on_release=self.delete_op_action
+                ),
+            ],
+        )
+
+    def delete_op_action(self, instance):
+        # Custom function called when DISCARD is clicked
+        for filename in os.listdir(self.op_dir):
+            if filename.endswith(".jpg") or filename.endswith(".jpeg") or filename.endswith(".png"):
+                file_path = os.path.join(self.op_dir, filename)
+                try:
+                    os.unlink(file_path)
+                    print(f"Deleted {file_path}")
+                except Exception as e:
+                    print(f"Could not delete the audion files, error: {e}")
+        self.show_toast_msg("Executed the audio cleanup!")
+        self.txt_dialog_closer(instance)
 
     def events(self, instance, keyboard, keycode, text, modifiers):
         """Handle mobile device button presses (e.g., Android back button)."""
