@@ -4,6 +4,4 @@ buildozer==1.5.0
 Cython==0.29.36
 numpy
 opencv-python
-ffpyplayer
 onnxruntime
-wheel

@@ -42,7 +42,7 @@ Builder.load_string('''
 
         MDFillRoundFlatIconButton:
             id: btn_upload
-            text: "Upload Image"
+            text: "Image"
             icon: "upload"
             font_size: sp(18)
             #md_bg_color: '#333036'
@@ -68,7 +68,7 @@ Builder.load_string('''
             md_bg_color: '#333036'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.2
-            #on_release: app.open_demo_video()
+            #on_release: app.reset_object_detect()
 
     BoxLayout: # converted image
         size_hint_y: 0.5
