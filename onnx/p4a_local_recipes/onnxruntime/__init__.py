@@ -17,8 +17,8 @@ class OnnxRuntimeRecipe(PyProjectRecipe):
     # Build in source like your Termux build
     build_in_src = True
 
-    def get_recipe_env(self, arch=None, with_flags_in_cc=True):
-        env = super().get_recipe_env(arch, with_flags_in_cc)
+    def get_recipe_env(self, arch=None):
+        env = super().get_recipe_env(arch)
         python_include_dir = self.ctx.python_recipe.include_root(arch.arch)
         print(f"Python include dir: {python_include_dir}")
         env['CPPFLAGS'] += f' -Wno-unused-variable -I{python_include_dir}'
@@ -37,12 +37,10 @@ class OnnxRuntimeRecipe(PyProjectRecipe):
         ANDROID_PLATFORM = str(self.ctx.ndk_api)
 
         build_dir = self.get_build_dir(arch.arch)
-        with_build = join(build_dir, "build")
         print(f"Build dir: {build_dir}")
         cmake_dir = join(build_dir, "cmake")
         capi_dir = join(build_dir, "onnxruntime", "capi")
         dist_dir = join(build_dir, "dist")
-        onnx_pybind_dir = join(build_dir, "_deps", "pybind11_project-src", "include", "pybind11", "detail")
         py_build_dir = Recipe.get_recipe("hostpython3", self.ctx).get_build_dir(arch.arch)
         print(f"Python build dir: {py_build_dir}")
         #python_include_dir = join(py_build_dir, 'Include') # from build dir
@@ -63,7 +61,6 @@ class OnnxRuntimeRecipe(PyProjectRecipe):
                                 'build/cmake/android.toolchain.cmake')
         protoc_path = sh.which("protoc")
         python_path = self.ctx.hostpython
-        #shprint(sh.mkdir, "-p", onnx_pybind_dir)
         shprint(sh.mkdir, "-p", capi_dir)
         shprint(sh.mkdir, "-p", dist_dir)
 
@@ -84,8 +81,6 @@ class OnnxRuntimeRecipe(PyProjectRecipe):
             f"-DPython_NumPy_INCLUDE_DIR={python_include_numpy}",
             f"-DPython_EXECUTABLE={python_path}",
             f"-Dpybind11_INCLUDE_DIRS={pybind11_include_dir};{python_include_dir};{python_include_numpy}",
-            #f"-DPython_INCLUDE_DIR={python_include_dir}",
-            #f"-DPython_INCLUDE_DIRS={python_include_dir}",
             f"-DPython_LIBRARY={python_library}",
             f"-DPython_LIBRARIES={python_library}",
             "-DCMAKE_BUILD_TYPE=RELEASE",
@@ -99,8 +94,6 @@ class OnnxRuntimeRecipe(PyProjectRecipe):
             #shprint(sh.Command("cmake"), "--build", ".", _env=env)
             #shprint(sh.Command("cmake"), "--install", ".", _env=env)
 
-            print("=== Installed capi contents ===")
-            shprint(sh.ls, "-R", capi_dir)
             # Build wheel
             #shprint(python_path, "-m", "build", "--wheel", "--no-isolation", _env=env)
 
