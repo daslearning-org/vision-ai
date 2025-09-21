@@ -87,6 +87,21 @@ class OnnxDetect():
             return final_result
         original_height, original_width = img.shape[:2]
 
+        if original_width >= 4000:
+            text_size = 2.0
+        elif original_width >= 3000:
+            text_size = 1.8
+        elif original_width >= 2500:
+            text_size = 1.5
+        elif original_width >= 2000:
+            text_size = 1.2
+        elif original_width >= 1500:
+            text_size = 1.0
+        elif original_width >= 800:
+            text_size = 0.8
+        else:
+            text_size = 0.5
+
         # Resize to 300x300 for model input, keep as RGB uint8
         img_resized = cv2.resize(img, (300, 300))
         img_resized = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
@@ -138,7 +153,7 @@ class OnnxDetect():
 
                 # Draw rectangle and label
                 cv2.rectangle(output_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(output_img, f"{label}: {score:.2f}", (x1, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                cv2.putText(output_img, f"{label}: {score:.2f}", (x1, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 255, 0), 2)
 
         # Save or display
         cv2.imwrite(op_img_path, output_img)

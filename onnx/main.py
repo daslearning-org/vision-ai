@@ -16,7 +16,7 @@ from kivymd.uix.navigationdrawer import MDNavigationDrawerMenu
 from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.label import MDLabel
 from kivymd.uix.dialog import MDDialog
-from kivymd.uix.button import MDFlatButton
+from kivymd.uix.button import MDFlatButton, MDFloatingActionButton
 
 # IMPORTANT: Set this property for keyboard behavior
 Window.softinput_mode = "below_target"
@@ -27,7 +27,7 @@ from screens.setting import SettingsBox
 from onnx_vision import OnnxDetect
 
 ## Global definitions
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 # Determine the base path for your application's resources
 if getattr(sys, 'frozen', False):
     # Running as a PyInstaller bundle
@@ -47,6 +47,8 @@ class ContentNavigationDrawer(MDNavigationDrawerMenu):
 class VisionAiApp(MDApp):
     is_onnx_running = ObjectProperty()
     image_path = StringProperty("")
+    op_img_path = StringProperty("")
+    onnx_detect = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -119,8 +121,13 @@ class VisionAiApp(MDApp):
             preview=True,
             #show_hidden_files=True,
         )
-        # debug
-        print(self.root.ids)
+        self.is_op_file_mgr_open = False
+        self.op_file_manager = MDFileManager(
+            exit_manager=self.op_file_exit_manager,
+            select_path=self.select_op_path,
+            selector="folder",  # Restrict to selecting directories only
+        )
+        print("Initialisation is successfull")
 
     def show_toast_msg(self, message, is_error=False):
         from kivymd.uix.snackbar import MDSnackbar
@@ -147,6 +154,10 @@ class VisionAiApp(MDApp):
     def txt_dialog_closer(self, instance):
         if self.txt_dialog:
             self.txt_dialog.dismiss()
+
+    def on_img_obj_detect(self):
+        print(f"Entered the image object detection screen")
+        self.show_toast_msg("You can detect objects on your image!")
 
     def open_img_file_manager(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
@@ -177,6 +188,45 @@ class VisionAiApp(MDApp):
         self.is_img_manager_open = False
         self.img_file_manager.close()
 
+    def open_op_file_manager(self, instance):
+        """Open the file manager to select destination folder. On android use Downloads or Pictures folders only"""
+        try:
+            self.op_file_manager.show(self.external_storage)
+            self.is_op_file_mgr_open = True
+        except Exception as e:
+            self.show_toast_msg(f"Error: {e}", is_error=True)
+
+    def download_n_remove_file(self, source, dest):
+        import shutil
+        try:
+            shutil.copyfile(source, dest)
+            print(f"File successfully download to: {dest}")
+            self.show_toast_msg(f"File download to: {dest}")
+            os.remove(source)
+            return True
+        except Exception as e:
+            print(f"Error saving file: {e}")
+            self.show_toast_msg(f"Error saving file: {e}", is_error=True)
+            return False
+
+    def select_op_path(self, path: str):
+        """
+        Called when a directory is selected. Save the Output file.
+        """
+        filename = os.path.basename(self.op_img_path)
+        chosen_path = os.path.join(path, filename) # destination path
+        download_stat = self.download_n_remove_file(self.op_img_path, chosen_path)
+        if download_stat:
+            self.op_img_path = ""
+            result_box = self.root.ids.img_detect_box.ids.result_image
+            result_box.clear_widgets()
+        self.op_file_exit_manager()
+
+    def op_file_exit_manager(self, *args):
+        """Called when the user reaches the root of the directory tree."""
+        self.is_op_file_mgr_open = False
+        self.op_file_manager.close()
+
     def submit_onnx_detect(self):
         if self.image_path == "":
             self.show_toast_msg("No image is selected!", is_error=True)
@@ -198,6 +248,7 @@ class VisionAiApp(MDApp):
         self.is_onnx_running = False
         if status is True:
             self.show_toast_msg(f"Output generated at: {message}")
+            self.op_img_path = message
             result_box = self.root.ids.img_detect_box.ids.result_image
             result_box.clear_widgets()
             fitImage = Image(
@@ -205,6 +256,15 @@ class VisionAiApp(MDApp):
                 fit_mode = "contain"
             )
             result_box.add_widget(fitImage)
+            down_btn = MDFloatingActionButton(
+                icon="download",
+                type="small",
+                theme_icon_color="Custom",
+                md_bg_color='#e9dff7',
+                icon_color='#211c29',
+            )
+            down_btn.bind(on_release=self.open_op_file_manager)
+            result_box.add_widget(down_btn)
         else:
             self.show_toast_msg(message, is_error=True)
 
