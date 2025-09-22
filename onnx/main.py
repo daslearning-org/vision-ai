@@ -49,6 +49,7 @@ class VisionAiApp(MDApp):
     image_path = StringProperty("")
     op_img_path = StringProperty("")
     onnx_detect = ObjectProperty(None)
+    cam_found = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -57,23 +58,6 @@ class VisionAiApp(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "Blue"
         self.theme_cls.accent_palette = "Orange"
-        self.top_menu_items = {
-            "Documentation": {
-                "icon": "file-document-check",
-                "action": "web",
-                "url": "https://blog.daslearning.in/llm_ai/genai/image-to-animation.html",
-            },
-            "Contact Us": {
-                "icon": "card-account-phone",
-                "action": "web",
-                "url": "https://daslearning.in/contact/",
-            },
-            "Check for update": {
-                "icon": "github",
-                "action": "update",
-                "url": "",
-            }
-        }
         return Builder.load_file(kv_file_path)
 
     def on_start(self):
@@ -159,6 +143,29 @@ class VisionAiApp(MDApp):
         print(f"Entered the image object detection screen")
         self.show_toast_msg("You can detect objects on your image!")
 
+    def on_cam_obj_detect(self):
+        print(f"Entered the camera object detection screen")
+        cam_uix = self.root.ids.img_detect_box.ids.camera
+        if platform == "android":
+            cam_indx = 0
+        else:
+            import cv2
+            available_cameras = []
+            for i in range(3):
+                cap = cv2.VideoCapture(i)
+                if cap.isOpened():
+                    print(f"Camera found at index: {i}")
+                    available_cameras.append(i)
+                    cap.release()
+            if len(available_cameras) >= 1:
+                cam_indx = available_cameras[0]
+            else:
+                self.show_toast_msg(f"No camera found on {platform}!", is_error=True)
+                return
+        cam_uix.index = cam_indx
+        cam_uix.play = True
+        self.cam_found = True
+
     def open_img_file_manager(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
         if self.is_onnx_running:
@@ -239,6 +246,23 @@ class VisionAiApp(MDApp):
         self.is_onnx_running = True
         tmp_spin = TempSpinWait()
         result_box = self.root.ids.img_detect_box.ids.result_image
+        result_box.clear_widgets()
+        result_box.add_widget(tmp_spin)
+
+    def capture_n_onnx_detect(self):
+        cam_uix = self.root.ids.img_detect_box.ids.camera
+        if self.is_onnx_running:
+            self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
+            return
+        self.image_path = ""
+        if not self.cam_found:
+            self.show_toast_msg("Camera could not be loaded", is_error=True)
+            return
+        onnx_thread = Thread(target=self.onnx_detect.run_detect, args=(self.image_path, self.onnx_detect_callback), daemon=True)
+        onnx_thread.start()
+        self.is_onnx_running = True
+        tmp_spin = TempSpinWait()
+        result_box = self.root.ids.img_detect_box.ids.cam_result_image
         result_box.clear_widgets()
         result_box.add_widget(tmp_spin)
 
@@ -352,6 +376,14 @@ class VisionAiApp(MDApp):
                 else:
                     self.img_file_manager.back()  # Navigate back within file manager
                 return True  # Consume the event to prevent app exit
+            if self.is_op_file_mgr_open:
+                # Check if we are at the root of the directory tree
+                if self.op_file_manager.current_path == self.external_storage:
+                    self.show_toast_msg(f"Closing file manager from main storage")
+                    self.op_file_exit_manager()
+                else:
+                    self.op_file_manager.back()  # Navigate back within file manager
+                return True
         return False
 
 if __name__ == '__main__':
