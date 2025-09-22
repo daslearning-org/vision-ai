@@ -23,11 +23,12 @@ Window.softinput_mode = "below_target"
 
 # Import your local screen classes & modules
 from screens.img_obj_detect import ImgObjDetBox, TempSpinWait
+from screens.cam_obj_detect import CamObjDetBox
 from screens.setting import SettingsBox
 from onnx_vision import OnnxDetect
 
 ## Global definitions
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 # Determine the base path for your application's resources
 if getattr(sys, 'frozen', False):
     # Running as a PyInstaller bundle
@@ -67,7 +68,8 @@ class VisionAiApp(MDApp):
             from jnius import autoclass, PythonJavaClass, java_method
             request_permissions([
                 Permission.READ_EXTERNAL_STORAGE,
-                Permission.WRITE_EXTERNAL_STORAGE
+                Permission.WRITE_EXTERNAL_STORAGE,
+                Permission.CAMERA,
             ])
             context = autoclass('org.kivy.android.PythonActivity').mActivity
             android_path = context.getExternalFilesDir(None).getAbsolutePath()
@@ -82,8 +84,9 @@ class VisionAiApp(MDApp):
             except Exception:
                 self.external_storage = os.path.abspath("/storage/emulated/0/")
         else:
-            self.internal_storage = os.path.abspath("/")
-            self.external_storage = os.path.abspath("/")
+            self.internal_storage = os.path.expanduser("~")
+            self.external_storage = os.path.expanduser("~")
+            os.makedirs(os.path.join(self.internal_storage, 'images'), exist_ok=True)
             self.model_dir = os.path.join(self.user_data_dir, 'model_files')
             self.op_dir = os.path.join(self.user_data_dir, 'outputs')
         os.makedirs(self.model_dir, exist_ok=True)
@@ -145,7 +148,7 @@ class VisionAiApp(MDApp):
 
     def on_cam_obj_detect(self):
         print(f"Entered the camera object detection screen")
-        cam_uix = self.root.ids.img_detect_box.ids.camera
+        cam_uix = self.root.ids.cam_detect_box.ids.camera
         if platform == "android":
             cam_indx = 0
         else:
@@ -165,6 +168,12 @@ class VisionAiApp(MDApp):
         cam_uix.index = cam_indx
         cam_uix.play = True
         self.cam_found = True
+
+    def on_cam_obj_dt_leave(self):
+        print(f"Exit from the camera object detection screen")
+        cam_uix = self.root.ids.cam_detect_box.ids.camera
+        if self.cam_found:
+            cam_uix.play = False
 
     def open_img_file_manager(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
@@ -241,7 +250,7 @@ class VisionAiApp(MDApp):
         if self.is_onnx_running:
             self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
             return
-        onnx_thread = Thread(target=self.onnx_detect.run_detect, args=(self.image_path, self.onnx_detect_callback), daemon=True)
+        onnx_thread = Thread(target=self.onnx_detect.run_detect, args=(self.image_path, self.onnx_detect_callback, "imgObjDetect"), daemon=True)
         onnx_thread.start()
         self.is_onnx_running = True
         tmp_spin = TempSpinWait()
@@ -250,7 +259,7 @@ class VisionAiApp(MDApp):
         result_box.add_widget(tmp_spin)
 
     def capture_n_onnx_detect(self):
-        cam_uix = self.root.ids.img_detect_box.ids.camera
+        cam_uix = self.root.ids.cam_detect_box.ids.camera
         if self.is_onnx_running:
             self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
             return
@@ -258,22 +267,34 @@ class VisionAiApp(MDApp):
         if not self.cam_found:
             self.show_toast_msg("Camera could not be loaded", is_error=True)
             return
-        onnx_thread = Thread(target=self.onnx_detect.run_detect, args=(self.image_path, self.onnx_detect_callback), daemon=True)
+        import datetime
+        now = datetime.datetime.now()
+        current_time = str(now.strftime("%H%M%S"))
+        current_date = str(now.strftime("%Y%m%d"))
+        internal_dir = os.path.join(self.internal_storage, 'images')
+        capture_file = f"aivision-{current_date}-{current_time}.png"
+        self.image_path = os.path.join(internal_dir, capture_file)
+        cam_uix.export_to_png(self.image_path)
+        onnx_thread = Thread(target=self.onnx_detect.run_detect, args=(self.image_path, self.onnx_detect_callback, "camObjDetect"), daemon=True)
         onnx_thread.start()
         self.is_onnx_running = True
         tmp_spin = TempSpinWait()
-        result_box = self.root.ids.img_detect_box.ids.cam_result_image
+        result_box = self.root.ids.cam_detect_box.ids.cam_result_image
         result_box.clear_widgets()
         result_box.add_widget(tmp_spin)
 
     def onnx_detect_callback(self, onnx_resp):
         status = onnx_resp["status"]
         message = onnx_resp["message"]
+        caller = onnx_resp["caller"]
         self.is_onnx_running = False
+        if caller == "camObjDetect":
+            result_box = self.root.ids.cam_detect_box.ids.cam_result_image
+        else:
+            result_box = self.root.ids.img_detect_box.ids.result_image
         if status is True:
             self.show_toast_msg(f"Output generated at: {message}")
             self.op_img_path = message
-            result_box = self.root.ids.img_detect_box.ids.result_image
             result_box.clear_widgets()
             fitImage = Image(
                 source = message,
@@ -297,6 +318,11 @@ class VisionAiApp(MDApp):
         uploaded_image_box = self.root.ids.img_detect_box.ids.uploaded_image
         uploaded_image_box.clear_widgets()
         result_box = self.root.ids.img_detect_box.ids.result_image
+        result_box.clear_widgets()
+
+    def reset_cam_object_detect(self):
+        self.image_path = ""
+        result_box = self.root.ids.cam_detect_box.ids.cam_result_image
         result_box.clear_widgets()
 
     def open_link(self, instance, url):

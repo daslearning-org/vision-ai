@@ -72,8 +72,8 @@ class OnnxDetect():
             except Exception as e:
                 print(f"Error loading model: {e}")
 
-    def run_detect(self, image_path, callback=None):
-        final_result = {"status": False, "message": "Initial load"}
+    def run_detect(self, image_path, callback=None, caller=None):
+        final_result = {"status": False, "message": "Initial load", "caller": caller}
         if self.sess is None:
             final_result['message'] = "Onnx session was not initialized!"
             return final_result

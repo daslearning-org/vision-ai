@@ -3,6 +3,7 @@
 ## Changes per version
 
 ### 0.0.4
+- Adding new screen to capture image from camera & detect object (can have bugs)
 - Fix back button action in downlaod manager
 
 ### 0.0.3
