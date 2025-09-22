@@ -2,6 +2,9 @@
 
 ## Changes per version
 
+### 0.0.4
+- Fix back button action in downlaod manager
+
 ### 0.0.3
 - Adding download button to downlaod the output image
 - Using conditional text size depending on image width
