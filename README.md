@@ -7,7 +7,8 @@ Using small machine learning or AI models we will be performing various `Compute
 1. Objects detection from Image
 
 ## 📽️ Demo
-To be added...
+You can click on the below Image or this [Youtube Link](https://www.youtube.com/watch?v=wUABgn4JYc4) to see the demo. Please let me know in the comments, how do you feel about this App. <br>
+[![VisionAI](./docs/images/thumb.png)](https://www.youtube.com/watch?v=wUABgn4JYc4)
 
 ## 🖧 Our Scematic Architecture
 To be added...
