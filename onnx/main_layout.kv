@@ -63,6 +63,8 @@ MDScreen:
 
                 MDScreen:
                     name: "imgObjDetect"
+                    #on_kv_post: app.on_img_obj_detect()
+                    on_enter: app.on_img_obj_detect()
                     ImgObjDetBox:
                         id: img_detect_box
 
