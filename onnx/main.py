@@ -68,11 +68,21 @@ class VisionAiApp(MDApp):
         if platform == "android":
             from android.permissions import request_permissions, Permission
             from jnius import autoclass, PythonJavaClass, java_method
-            request_permissions([
-                Permission.READ_EXTERNAL_STORAGE,
-                Permission.WRITE_EXTERNAL_STORAGE,
-                Permission.CAMERA,
-            ])
+            sdk_version = 28
+            try:
+                VERSION = autoclass('android.os.Build$VERSION')
+                sdk_version = VERSION.SDK_INT
+                print(f"Android SDK: {sdk_version}")
+                #self.show_toast_msg(f"Android SDK: {sdk_version}")
+            except Exception as e:
+                print(f"Could not check the android SDK version: {e}")
+                #self.show_toast_msg(f"Error checking SDK: {e}", is_error=True)
+            permissions = [Permission.CAMERA]
+            if sdk_version >= 33:  # Android 13+
+                permissions.append(Permission.READ_MEDIA_IMAGES)
+            else:  # Android 10–12
+                permissions.extend([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+            request_permissions(permissions)
             context = autoclass('org.kivy.android.PythonActivity').mActivity
             android_path = context.getExternalFilesDir(None).getAbsolutePath()
             self.model_dir = os.path.join(android_path, 'model_files')
@@ -145,15 +155,17 @@ class VisionAiApp(MDApp):
             self.txt_dialog.dismiss()
 
     def on_img_obj_detect(self):
-        print(f"Entered the image object detection screen")
         self.show_toast_msg("You can detect objects on your image!")
 
     def on_cam_obj_detect(self):
-        print(f"Entered the camera object detection screen")
+        self.show_toast_msg("Capture an image & detect objects!")
         self.cam_uix = self.root.ids.cam_detect_box.ids.capture_image
+        self.cam_uix.clear_widgets()
         if platform == "android":
             cam_indx = 0
+            resolution = (1040, 780)
         else:
+            resolution = (640, 480)
             import cv2
             available_cameras = []
             for i in range(3):
@@ -170,7 +182,8 @@ class VisionAiApp(MDApp):
         try:
             self.camera = Camera(
                 index = cam_indx,
-                resolution = (640, 480),
+                resolution = resolution,
+                fit_mode = "contain",
                 play = True
             )
             self.cam_uix.add_widget(self.camera)
@@ -180,9 +193,9 @@ class VisionAiApp(MDApp):
             self.show_toast_msg(f"Error setting up the camera: {e}", is_error=True)
 
     def on_cam_obj_dt_leave(self):
-        print(f"Exit from the camera object detection screen")
         if self.cam_found:
             self.camera.play = False
+            self.cam_uix.clear_widgets()
 
     def open_img_file_manager(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
@@ -243,7 +256,10 @@ class VisionAiApp(MDApp):
         download_stat = self.download_n_remove_file(self.op_img_path, chosen_path)
         if download_stat:
             self.op_img_path = ""
-            result_box = self.root.ids.img_detect_box.ids.result_image
+            if self.root.ids.screen_manager.current == "imgObjDetect":
+                result_box = self.root.ids.img_detect_box.ids.result_image
+            else:
+                result_box = self.root.ids.cam_detect_box.ids.cam_result_image
             result_box.clear_widgets()
         self.op_file_exit_manager()
 
