@@ -163,7 +163,7 @@ class VisionAiApp(MDApp):
         self.cam_uix.clear_widgets()
         if platform == "android":
             cam_indx = 0
-            resolution = (1040, 780)
+            resolution = (960, 720) # will fallback to 480 if fails again
         else:
             resolution = (640, 480)
             import cv2
