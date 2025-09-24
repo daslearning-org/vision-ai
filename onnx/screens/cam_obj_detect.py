@@ -15,11 +15,11 @@ Builder.load_string('''
     BoxLayout: # original image
         size_hint_y: 0.4
         id: capture_image
-        Camera:
-            id: camera
-            #index: 1
-            #resolution: (640, 480)
-            play: False
+        #Camera:
+        #    id: camera
+        #    #index: 1
+        #    resolution: (640, 480)
+        #    play: False
 
     MDGridLayout: # buttons
         cols: 2

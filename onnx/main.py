@@ -10,6 +10,7 @@ from kivy.core.window import Window
 from kivy.metrics import dp, sp
 from kivy.utils import platform
 from kivy.uix.image import Image
+from kivy.uix.camera import Camera
 
 from kivymd.app import MDApp
 from kivymd.uix.navigationdrawer import MDNavigationDrawerMenu
@@ -51,6 +52,7 @@ class VisionAiApp(MDApp):
     op_img_path = StringProperty("")
     onnx_detect = ObjectProperty(None)
     cam_found = ObjectProperty(None)
+    camera = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -148,7 +150,7 @@ class VisionAiApp(MDApp):
 
     def on_cam_obj_detect(self):
         print(f"Entered the camera object detection screen")
-        cam_uix = self.root.ids.cam_detect_box.ids.camera
+        self.cam_uix = self.root.ids.cam_detect_box.ids.capture_image
         if platform == "android":
             cam_indx = 0
         else:
@@ -165,15 +167,22 @@ class VisionAiApp(MDApp):
             else:
                 self.show_toast_msg(f"No camera found on {platform}!", is_error=True)
                 return
-        cam_uix.index = cam_indx
-        cam_uix.play = True
-        self.cam_found = True
+        try:
+            self.camera = Camera(
+                index = cam_indx,
+                resolution = (640, 480),
+                play = True
+            )
+            self.cam_uix.add_widget(self.camera)
+            self.cam_found = True
+        except Exception as e:
+            print(f"Error setting up the camera: {e}")
+            self.show_toast_msg(f"Error setting up the camera: {e}", is_error=True)
 
     def on_cam_obj_dt_leave(self):
         print(f"Exit from the camera object detection screen")
-        cam_uix = self.root.ids.cam_detect_box.ids.camera
         if self.cam_found:
-            cam_uix.play = False
+            self.camera.play = False
 
     def open_img_file_manager(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
@@ -259,14 +268,13 @@ class VisionAiApp(MDApp):
         result_box.add_widget(tmp_spin)
 
     def capture_n_onnx_detect(self):
-        cam_uix = self.root.ids.cam_detect_box.ids.camera
+        if not self.cam_found:
+            self.show_toast_msg("Camera could not be loaded!", is_error=True)
+            return
         if self.is_onnx_running:
             self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
             return
         self.image_path = ""
-        if not self.cam_found:
-            self.show_toast_msg("Camera could not be loaded", is_error=True)
-            return
         import datetime
         now = datetime.datetime.now()
         current_time = str(now.strftime("%H%M%S"))
@@ -274,7 +282,7 @@ class VisionAiApp(MDApp):
         internal_dir = os.path.join(self.internal_storage, 'images')
         capture_file = f"aivision-{current_date}-{current_time}.png"
         self.image_path = os.path.join(internal_dir, capture_file)
-        cam_uix.export_to_png(self.image_path)
+        self.camera.export_to_png(self.image_path)
         onnx_thread = Thread(target=self.onnx_detect.run_detect, args=(self.image_path, self.onnx_detect_callback, "camObjDetect"), daemon=True)
         onnx_thread.start()
         self.is_onnx_running = True
