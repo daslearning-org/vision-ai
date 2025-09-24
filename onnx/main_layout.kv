@@ -1,6 +1,7 @@
 # main_layout.kv
 ## import local components
 #:import ImgObjDetBox screens.img_obj_detect.ImgObjDetBox
+#:import CamObjDetBox screens.cam_obj_detect.CamObjDetBox
 #:import SettingsBox screens.setting.SettingsBox
 
 <DrawerClickableItem@MDNavigationDrawerItem>
@@ -36,6 +37,13 @@
             root.screen_manager.current = "imgObjDetect"
 
     DrawerClickableItem:
+        icon: "camera"
+        text: "Camera Object Detection"
+        on_press:
+            root.nav_drawer.set_state("close")
+            root.screen_manager.current = "camObjDetect"
+
+    DrawerClickableItem:
         icon: "wrench"
         text: "Settings & Help"
         on_press:
@@ -67,6 +75,13 @@ MDScreen:
                     on_enter: app.on_img_obj_detect()
                     ImgObjDetBox:
                         id: img_detect_box
+
+                MDScreen:
+                    name: "camObjDetect"
+                    on_enter: app.on_cam_obj_detect()
+                    on_leave: app.on_cam_obj_dt_leave()
+                    CamObjDetBox:
+                        id: cam_detect_box
 
                 MDScreen:
                     name: "settings"

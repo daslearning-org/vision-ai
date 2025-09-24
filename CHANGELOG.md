@@ -2,6 +2,12 @@
 
 ## Changes per version
 
+### 0.0.4
+- Adding a new menu to capture image from camera & detect objects (can have bugs)
+- Fix back button action in downlaod manager
+- Update relevant links under help section
+- Try to gain relevant accesses on Android to perform the tasks, mainly Camera & Image File access
+
 ### 0.0.3
 - Adding download button to downlaod the output image
 - Using conditional text size depending on image width

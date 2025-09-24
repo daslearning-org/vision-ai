@@ -49,12 +49,12 @@ Builder.load_string('''
                 MDList:
                     OneLineIconListItem:
                         text: "Demo (How to use)"
-                        on_release: app.open_link(self, "https://www.youtube.com/playlist?list=PL7ZAVvBwIkXYJPUA3Wvkykk0u7DYWO3OI")
+                        on_release: app.open_link(self, "https://youtube.com/watch?v=wUABgn4JYc4")
                         IconLeftWidget:
                             icon: "youtube"
                     OneLineIconListItem:
                         text: "Documentation (Blog)"
-                        on_release: app.open_link(self, "https://blog.daslearning.in/")
+                        on_release: app.open_link(self, "https://blog.daslearning.in/llm_ai/ml/ai-vision.html")
                         IconLeftWidget:
                             icon: "file-document-check"
                     OneLineIconListItem:
