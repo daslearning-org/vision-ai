@@ -3,6 +3,7 @@ import os
 os.environ['KIVY_GL_BACKEND'] = 'sdl2'
 import sys
 from threading import Thread
+import requests
 
 from kivy.lang import Builder
 from kivy.properties import StringProperty, NumericProperty, ObjectProperty
@@ -11,6 +12,7 @@ from kivy.metrics import dp, sp
 from kivy.utils import platform
 from kivy.uix.image import Image
 from kivy.uix.camera import Camera
+from kivy.clock import Clock
 
 from kivymd.app import MDApp
 from kivymd.uix.navigationdrawer import MDNavigationDrawerMenu
@@ -26,10 +28,12 @@ Window.softinput_mode = "below_target"
 from screens.img_obj_detect import ImgObjDetBox, TempSpinWait
 from screens.cam_obj_detect import CamObjDetBox
 from screens.setting import SettingsBox
-from onnx.onnx_detect import OnnxDetect
+from onnx_detect import OnnxDetect
 
 ## Global definitions
-__version__ = "0.0.5"
+__version__ = "0.0.5" # The APP version
+
+detect_model_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
 # Determine the base path for your application's resources
 if getattr(sys, 'frozen', False):
     # Running as a PyInstaller bundle
@@ -51,8 +55,12 @@ class VisionAiApp(MDApp):
     image_path = StringProperty("")
     op_img_path = StringProperty("")
     onnx_detect = ObjectProperty(None)
+    onnx_sess_set = ObjectProperty(None)
+    onnx_classify = ObjectProperty(None)
     cam_found = ObjectProperty(None)
     camera = ObjectProperty(None)
+    detect_model_path = StringProperty("")
+    detect_model_exists = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -103,12 +111,7 @@ class VisionAiApp(MDApp):
             self.op_dir = os.path.join(self.user_data_dir, 'outputs')
         os.makedirs(self.model_dir, exist_ok=True)
         os.makedirs(self.op_dir, exist_ok=True)
-
-        # create onnx objects
-        self.onnx_detect = OnnxDetect(
-            save_dir=self.op_dir,
-            model_dir=self.model_dir,
-        )
+        self.detect_model_path = os.path.join(self.model_dir, "ssd_mobilenet_v1_10.onnx")
 
         # file managers
         self.is_img_manager_open = False
@@ -126,7 +129,85 @@ class VisionAiApp(MDApp):
             select_path=self.select_op_path,
             selector="folder",  # Restrict to selecting directories only
         )
+
+        self.detect_model_exists = os.path.exists(self.detect_model_path)
+        if not self.detect_model_exists:
+            self.popup_detect_model()
+
+        # create onnx objects
+        self.onnx_detect = OnnxDetect(
+            save_dir=self.op_dir,
+            model_dir=self.model_dir,
+        )
+
         print("Initialisation is successfull")
+
+    def update_download_progress(self, downloaded, total_size):
+        if total_size > 0:
+            percentage = (downloaded / total_size) * 100
+            self.download_progress.text = f"Progress: {percentage:.1f}%"
+        else:
+            self.download_progress.text = f"Progress: {downloaded} bytes"
+
+    def download_file(self, download_url, download_path):
+        filename = download_url.split("/")[-1]
+        try:
+            with requests.get(download_url, stream=True) as req:
+                req.raise_for_status()
+                total_size = int(req.headers.get('content-length', 0))
+                downloaded = 0
+                with open(download_path, 'wb') as f:
+                    for chunk in req.iter_content(chunk_size=8192):
+                        if chunk:
+                            f.write(chunk)
+                            downloaded += len(chunk)
+                            Clock.schedule_once(lambda dt: self.update_download_progress(downloaded, total_size))
+            if os.path.exists(download_path):
+                if filename == "ssd_mobilenet_v1_10.onnx" and os.path.exists(download_path):
+                    self.detect_model_exists = True
+                Clock.schedule_once(lambda dt: self.show_toast_msg(f"Download complete: {download_path}"))
+            else:
+                Clock.schedule_once(lambda dt: self.show_toast_msg(f"Download failed for: {download_path}", is_error=True))
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading the onnx file: {e} 😞")
+            Clock.schedule_once(lambda dt: self.show_toast_msg(f"Download failed for: {download_path}", is_error=True))
+
+    def download_model_file(self, model_url, download_path, instance=None):
+        self.txt_dialog_closer(instance)
+        filename = download_path.split("/")[-1]
+        print(f"Starting the download for: {filename}")
+        if self.root.ids.screen_manager.current == "imgObjDetect":
+            result_box = self.root.ids.img_detect_box.ids.result_image
+        else:
+            result_box = self.root.ids.cam_detect_box.ids.cam_result_image
+        result_box.clear_widgets()
+        self.download_progress = MDLabel(text="Progress: 0%")
+        result_box.add_widget(self.download_progress)
+        Thread(target=self.download_file, args=(model_url, download_path), daemon=True).start()
+
+    def download_detect_model(self, instance):
+        self.download_model_file(detect_model_url, self.detect_model_path, instance)
+
+    def popup_detect_model(self):
+        buttons = [
+            MDFlatButton(
+                text="Cancel",
+                theme_text_color="Custom",
+                text_color=self.theme_cls.primary_color,
+                on_release=self.txt_dialog_closer
+            ),
+            MDFlatButton(
+                text="Ok",
+                theme_text_color="Custom",
+                text_color="green",
+                on_release=self.download_detect_model
+            ),
+        ]
+        self.show_text_dialog(
+            "Downlaod the model file",
+            f"You need to downlaod the file for the first time (~30MB)",
+            buttons
+        )
 
     def show_toast_msg(self, message, is_error=False):
         from kivymd.uix.snackbar import MDSnackbar
@@ -199,14 +280,20 @@ class VisionAiApp(MDApp):
 
     def open_img_file_manager(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
+        if not self.detect_model_exists:
+            self.popup_detect_model()
         if self.is_onnx_running:
             self.show_toast_msg("Please wait for the current operation to finish", is_error=True)
             return
-        try:
-            self.img_file_manager.show(self.internal_storage)  # native app specific path
-            self.is_img_manager_open = True
-        except Exception as e:
-            self.show_toast_msg(f"Error: {e}", is_error=True)
+        if self.onnx_sess_set:
+            try:
+                self.img_file_manager.show(self.internal_storage)  # native app specific path
+                self.is_img_manager_open = True
+            except Exception as e:
+                self.show_toast_msg(f"Error: {e}", is_error=True)
+        else:
+            self.onnx_sess_set = self.onnx_detect.start_detect_session()
+            self.open_img_file_manager()
 
     def select_img_path(self, path: str):
         self.image_path = path
