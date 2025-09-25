@@ -51,7 +51,8 @@ class ContentNavigationDrawer(MDNavigationDrawerMenu):
 
 ## kivymd app class
 class VisionAiApp(MDApp):
-    is_onnx_running = ObjectProperty()
+    is_onnx_running = ObjectProperty(None)
+    is_downloading = ObjectProperty(None)
     image_path = StringProperty("")
     op_img_path = StringProperty("")
     onnx_detect = ObjectProperty(None)
@@ -60,7 +61,6 @@ class VisionAiApp(MDApp):
     cam_found = ObjectProperty(None)
     camera = ObjectProperty(None)
     detect_model_path = StringProperty("")
-    detect_model_exists = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -130,8 +130,7 @@ class VisionAiApp(MDApp):
             selector="folder",  # Restrict to selecting directories only
         )
 
-        self.detect_model_exists = os.path.exists(self.detect_model_path)
-        if not self.detect_model_exists:
+        if not os.path.exists(self.detect_model_path):
             self.popup_detect_model()
 
         # create onnx objects
@@ -152,6 +151,7 @@ class VisionAiApp(MDApp):
     def download_file(self, download_url, download_path):
         filename = download_url.split("/")[-1]
         try:
+            self.is_downloading = "ssd_mobilenet_v1_10.onnx"
             with requests.get(download_url, stream=True) as req:
                 req.raise_for_status()
                 total_size = int(req.headers.get('content-length', 0))
@@ -163,14 +163,14 @@ class VisionAiApp(MDApp):
                             downloaded += len(chunk)
                             Clock.schedule_once(lambda dt: self.update_download_progress(downloaded, total_size))
             if os.path.exists(download_path):
-                if filename == "ssd_mobilenet_v1_10.onnx" and os.path.exists(download_path):
-                    self.detect_model_exists = True
                 Clock.schedule_once(lambda dt: self.show_toast_msg(f"Download complete: {download_path}"))
             else:
                 Clock.schedule_once(lambda dt: self.show_toast_msg(f"Download failed for: {download_path}", is_error=True))
+            self.is_downloading = False
         except requests.exceptions.RequestException as e:
             print(f"Error downloading the onnx file: {e} 😞")
             Clock.schedule_once(lambda dt: self.show_toast_msg(f"Download failed for: {download_path}", is_error=True))
+            self.is_downloading = False
 
     def download_model_file(self, model_url, download_path, instance=None):
         self.txt_dialog_closer(instance)
@@ -181,7 +181,10 @@ class VisionAiApp(MDApp):
         else:
             result_box = self.root.ids.cam_detect_box.ids.cam_result_image
         result_box.clear_widgets()
-        self.download_progress = MDLabel(text="Progress: 0%")
+        self.download_progress = MDLabel(
+            text="Progress: 0%",
+            halign="center"
+        )
         result_box.add_widget(self.download_progress)
         Thread(target=self.download_file, args=(model_url, download_path), daemon=True).start()
 
@@ -239,6 +242,8 @@ class VisionAiApp(MDApp):
         self.show_toast_msg("You can detect objects on your image!")
 
     def on_cam_obj_detect(self):
+        if not os.path.exists(self.detect_model_path) and self.is_downloading != "ssd_mobilenet_v1_10.onnx":
+            self.popup_detect_model()
         self.show_toast_msg("Capture an image & detect objects!")
         self.cam_uix = self.root.ids.cam_detect_box.ids.capture_image
         self.cam_uix.clear_widgets()
@@ -280,20 +285,23 @@ class VisionAiApp(MDApp):
 
     def open_img_file_manager(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
-        if not self.detect_model_exists:
+        if self.is_downloading == "ssd_mobilenet_v1_10.onnx":
+            self.show_toast_msg("Please wait for the model download to finish!", is_error=True)
+            return
+        if not os.path.exists(self.detect_model_path) and self.is_downloading != "ssd_mobilenet_v1_10.onnx":
+            self.onnx_sess_set = False
             self.popup_detect_model()
+            return
+        if not self.onnx_sess_set:
+            self.onnx_sess_set = self.onnx_detect.start_detect_session()
         if self.is_onnx_running:
             self.show_toast_msg("Please wait for the current operation to finish", is_error=True)
             return
-        if self.onnx_sess_set:
-            try:
-                self.img_file_manager.show(self.internal_storage)  # native app specific path
-                self.is_img_manager_open = True
-            except Exception as e:
-                self.show_toast_msg(f"Error: {e}", is_error=True)
-        else:
-            self.onnx_sess_set = self.onnx_detect.start_detect_session()
-            self.open_img_file_manager()
+        try:
+            self.img_file_manager.show(self.internal_storage)  # native app specific path
+            self.is_img_manager_open = True
+        except Exception as e:
+            self.show_toast_msg(f"Error: {e}", is_error=True)
 
     def select_img_path(self, path: str):
         self.image_path = path
@@ -359,6 +367,9 @@ class VisionAiApp(MDApp):
         if self.image_path == "":
             self.show_toast_msg("No image is selected!", is_error=True)
             return
+        if not self.onnx_sess_set:
+            self.onnx_sess_set = self.onnx_detect.start_detect_session()
+            self.submit_onnx_detect()
         if self.is_onnx_running:
             self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
             return
@@ -374,6 +385,16 @@ class VisionAiApp(MDApp):
         if not self.cam_found:
             self.show_toast_msg("Camera could not be loaded!", is_error=True)
             return
+        if self.is_downloading == "ssd_mobilenet_v1_10.onnx":
+            self.show_toast_msg("Please wait for the model download to finish!", is_error=True)
+            return
+        if not os.path.exists(self.detect_model_path) and self.is_downloading != "ssd_mobilenet_v1_10.onnx":
+            self.onnx_sess_set = False
+            self.popup_detect_model()
+            return
+        if not self.onnx_sess_set:
+            self.onnx_sess_set = self.onnx_detect.start_detect_session()
+            self.capture_n_onnx_detect()
         if self.is_onnx_running:
             self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
             return
