@@ -14,6 +14,7 @@ else:
     base_path = os.path.dirname(os.path.abspath(__file__))
 models_dir = os.path.join(base_path, "model_files")
 save_path = os.path.join(base_path, 'outputs')
+synset_path = os.path.join(base_path, 'synset_words.txtset')
 
 # Load the model
 model_path_local = 'resnet18-v1-7.onnx'  # Ensure this path is correct
@@ -93,7 +94,7 @@ class OnnxClassify():
             img = img.astype(np.float32)
 
             # use the labels from synset
-            with open("synset_words.txtset", 'r') as f:
+            with open(synset_path, 'r') as f:
                 labels = [line.split(' ', 1)[1].strip() for line in f.readlines()]
 
             # run the classification

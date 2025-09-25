@@ -2,6 +2,7 @@
 ## import local components
 #:import ImgObjDetBox screens.img_obj_detect.ImgObjDetBox
 #:import CamObjDetBox screens.cam_obj_detect.CamObjDetBox
+#:import ImgClassifytBox screens.img_obj_classify.ImgClassifytBox
 #:import SettingsBox screens.setting.SettingsBox
 
 <DrawerClickableItem@MDNavigationDrawerItem>
@@ -44,6 +45,13 @@
             root.screen_manager.current = "camObjDetect"
 
     DrawerClickableItem:
+        icon: "bird"
+        text: "Image Prediction"
+        on_press:
+            root.nav_drawer.set_state("close")
+            root.screen_manager.current = "imgClassify"
+
+    DrawerClickableItem:
         icon: "wrench"
         text: "Settings & Help"
         on_press:
@@ -82,6 +90,12 @@ MDScreen:
                     on_leave: app.on_cam_obj_dt_leave()
                     CamObjDetBox:
                         id: cam_detect_box
+
+                MDScreen:
+                    name: "imgClassify"
+                    on_enter: app.on_img_classify()
+                    ImgClassifytBox:
+                        id: img_classify_box
 
                 MDScreen:
                     name: "settings"
