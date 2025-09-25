@@ -43,10 +43,10 @@ class OnnxDetect():
     def start_detect_session(self, model_name="ssd_mobilenet_v1.onnx"):
         model_path = os.path.join(self.model_dir, model_name)
         download_path = os.path.join(self.model_dir, "ssd_mobilenet_v1_10.onnx")
-        if os.path.exists(model_path):
-            self.model_flag = True
-        elif os.path.exists(download_path):
+        if os.path.exists(download_path):
             model_path = download_path
+            self.model_flag = True
+        elif os.path.exists(model_path):
             self.model_flag = True
         else:
             model_path = download_path
