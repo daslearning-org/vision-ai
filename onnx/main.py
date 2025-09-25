@@ -26,10 +26,10 @@ Window.softinput_mode = "below_target"
 from screens.img_obj_detect import ImgObjDetBox, TempSpinWait
 from screens.cam_obj_detect import CamObjDetBox
 from screens.setting import SettingsBox
-from onnx_vision import OnnxDetect
+from onnx.onnx_detect import OnnxDetect
 
 ## Global definitions
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 # Determine the base path for your application's resources
 if getattr(sys, 'frozen', False):
     # Running as a PyInstaller bundle

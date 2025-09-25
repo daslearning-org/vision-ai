@@ -2,6 +2,10 @@
 
 ## Changes per version
 
+### 0.0.5
+- Adding `Image Classification` menu which can give top 5 predictions out of 1000 types as per `Synset` list for the main object on image.
+- Changing the downlaod style to ask for user prompt.
+
 ### 0.0.4
 - Adding a new menu to capture image from camera & detect objects (can have bugs)
 - Fix back button action in downlaod manager
