@@ -7,24 +7,8 @@ from kivymd.uix.button import MDFillRoundFlatIconButton
 
 
 Builder.load_string('''
-<TempSpinWait>:
-    id: temp_spin
-    orientation: 'horizontal'
-    adaptive_height: True
-    padding: dp(8)
 
-    MDLabel:
-        text: "Please wait..."
-        font_style: "Subtitle1"
-        adaptive_width: True
-
-    MDSpinner:
-        size_hint: None, None
-        size: dp(14), dp(14)
-        active: True
-
-
-<ImgObjDetBox@MDBoxLayout>:
+<ImgClassifytBox@MDBoxLayout>:
     orientation: 'vertical'
     spacing: dp(4)
 
@@ -48,17 +32,17 @@ Builder.load_string('''
             #md_bg_color: '#333036'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.2
-            on_release: app.open_img_file_manager()
+            on_release: app.open_clsfy_img_file()
 
         MDFillRoundFlatIconButton:
             id: btn_submit
-            text: "Detect"
+            text: "Classify"
             icon: "send"
             font_size: sp(18)
             md_bg_color: 'orange'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.6
-            on_release: app.submit_onnx_detect()
+            on_release: app.submit_onnx_classify()
 
         MDFillRoundFlatIconButton:
             id: btn_reset
@@ -68,20 +52,18 @@ Builder.load_string('''
             md_bg_color: '#333036'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.2
-            on_release: app.reset_object_detect()
+            on_release: app.reset_classify()
 
     BoxLayout: # converted image
         size_hint_y: 0.5
-        id: result_image
+        id: result_label
+        padding: dp(20)
         # add result here
 
 
 ''')
 
-class TempSpinWait(MDBoxLayout):
-    pass
-
-class ImgObjDetBox(MDBoxLayout):
+class ImgClassifytBox(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.name = "img_detect_bx"
+        self.name = "img_classify_bx"

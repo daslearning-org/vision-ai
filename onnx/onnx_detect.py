@@ -34,22 +34,24 @@ coco_labels = {
 
 
 class OnnxDetect():
-    def __init__(self, save_dir=save_path, model_dir=model_path_local, model_name="ssd_mobilenet_v1.onnx"):
+    def __init__(self, save_dir=save_path, model_dir=model_path_local):
         self.model_flag = False
         self.sess = None
         self.save_dir = save_dir
         self.model_dir = model_dir
+
+    def start_detect_session(self, model_name="ssd_mobilenet_v1.onnx"):
         model_path = os.path.join(self.model_dir, model_name)
         download_path = os.path.join(self.model_dir, "ssd_mobilenet_v1_10.onnx")
-        if os.path.exists(model_path):
-            self.model_flag = True
-        elif os.path.exists(download_path):
+        if os.path.exists(download_path):
             model_path = download_path
+            self.model_flag = True
+        elif os.path.exists(model_path):
             self.model_flag = True
         else:
             model_path = download_path
             print(f"The onnx model: {model_path} does not exist! Downloading it now...")
-            # try to download the file from github
+            # try to download the file from github as a backup
             downlaod_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
             import requests
             try:
@@ -69,13 +71,15 @@ class OnnxDetect():
                 # Get input and output names
                 self.input_name = self.sess.get_inputs()[0].name
                 self.output_names = [o.name for o in self.sess.get_outputs()]
+                return True
             except Exception as e:
                 print(f"Error loading model: {e}")
+        return False
 
     def run_detect(self, image_path, callback=None, caller=None):
         final_result = {"status": False, "message": "Initial load", "caller": caller}
         if self.sess is None:
-            final_result['message'] = "Onnx session was not initialized!"
+            final_result['message'] = "Onnx session was not initialized! Check if model has been downloaded."
             return final_result
         # Load and preprocess the image
         image_filename = image_path.split("/")[-1]
@@ -89,8 +93,10 @@ class OnnxDetect():
 
         if original_width >= 4000:
             text_size = 2.0
+            thickness = 4
         elif original_width >= 3000:
             text_size = 1.8
+            thickness = 3
         elif original_width >= 2500:
             text_size = 1.5
         elif original_width >= 2000:
@@ -99,8 +105,10 @@ class OnnxDetect():
             text_size = 1.0
         elif original_width >= 800:
             text_size = 0.8
+            thickness = 2
         else:
             text_size = 0.5
+            thickness = 1
 
         # Resize to 300x300 for model input, keep as RGB uint8
         img_resized = cv2.resize(img, (300, 300))
@@ -151,9 +159,10 @@ class OnnxDetect():
                 y2 = int(box[2] * original_height)
                 x2 = int(box[3] * original_width)
 
+                percent = int(score*100)
                 # Draw rectangle and label
                 cv2.rectangle(output_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(output_img, f"{label}: {score:.2f}", (x1, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 255, 0), 2)
+                cv2.putText(output_img, f"{label}: {percent}%", (x1, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 255, 0), thickness)
 
         # Save or display
         cv2.imwrite(op_img_path, output_img)
