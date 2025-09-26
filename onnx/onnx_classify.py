@@ -26,7 +26,7 @@ class OnnxClassify():
         self.save_dir = save_dir
         self.model_dir = model_dir
 
-    def start_detect_session(self, model_name="resnet18-v1-7.onnx"):
+    def start_classify_session(self, model_name="resnet18-v1-7.onnx"):
         model_path = os.path.join(self.model_dir, model_name)
         download_path = os.path.join(self.model_dir, "resnet18-v1-7.onnx")
         if os.path.exists(download_path):
@@ -38,7 +38,7 @@ class OnnxClassify():
             model_path = download_path
             print(f"The onnx model: {model_path} does not exist! Downloading it now...")
             # try to download the file from github as a backup
-            downlaod_url = f"https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
+            downlaod_url = "https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
             import requests
             try:
                 with requests.get(downlaod_url, stream=True) as req:
@@ -62,7 +62,7 @@ class OnnxClassify():
                 print(f"Error loading model: {e}")
         return False
 
-    def softmax(x):
+    def softmax(self, x):
         # Compute softmax probabilities
         exp_x = np.exp(x - np.max(x, axis=1, keepdims=True))
         return exp_x / np.sum(exp_x, axis=1, keepdims=True)
@@ -105,7 +105,8 @@ class OnnxClassify():
             # create the return label
             label = "Top-5 predictions: \n"
             for i, idx in enumerate(top5_indices):
-                label = label + f"{i+1}. {labels[idx]}: {top5_probs[i]:.4f} \n"
+                percent = top5_probs[i] * 100
+                label = label + f"{i+1}. {labels[idx]}: [b][color=#2574f5]{percent:.2f}%[/color][/b] \n"
             final_result["message"] = label
             final_result["status"] = True
         except Exception as e:

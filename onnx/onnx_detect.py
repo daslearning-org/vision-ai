@@ -93,8 +93,10 @@ class OnnxDetect():
 
         if original_width >= 4000:
             text_size = 2.0
+            thickness = 4
         elif original_width >= 3000:
             text_size = 1.8
+            thickness = 3
         elif original_width >= 2500:
             text_size = 1.5
         elif original_width >= 2000:
@@ -103,8 +105,10 @@ class OnnxDetect():
             text_size = 1.0
         elif original_width >= 800:
             text_size = 0.8
+            thickness = 2
         else:
             text_size = 0.5
+            thickness = 1
 
         # Resize to 300x300 for model input, keep as RGB uint8
         img_resized = cv2.resize(img, (300, 300))
@@ -155,9 +159,10 @@ class OnnxDetect():
                 y2 = int(box[2] * original_height)
                 x2 = int(box[3] * original_width)
 
+                percent = int(score*100)
                 # Draw rectangle and label
                 cv2.rectangle(output_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(output_img, f"{label}: {score:.2f}", (x1, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 255, 0), 2)
+                cv2.putText(output_img, f"{label}: {percent}%", (x1, y1 - 7), cv2.FONT_HERSHEY_SIMPLEX, text_size, (0, 255, 0), thickness)
 
         # Save or display
         cv2.imwrite(op_img_path, output_img)

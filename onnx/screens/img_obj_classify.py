@@ -36,7 +36,7 @@ Builder.load_string('''
 
         MDFillRoundFlatIconButton:
             id: btn_submit
-            text: "Submit"
+            text: "Classify"
             icon: "send"
             font_size: sp(18)
             md_bg_color: 'orange'
@@ -57,6 +57,7 @@ Builder.load_string('''
     BoxLayout: # converted image
         size_hint_y: 0.5
         id: result_label
+        padding: dp(20)
         # add result here
 
 

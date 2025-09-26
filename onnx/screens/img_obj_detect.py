@@ -52,7 +52,7 @@ Builder.load_string('''
 
         MDFillRoundFlatIconButton:
             id: btn_submit
-            text: "Submit"
+            text: "Detect"
             icon: "send"
             font_size: sp(18)
             md_bg_color: 'orange'
