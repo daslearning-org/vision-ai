@@ -32,7 +32,7 @@ from onnx_detect import OnnxDetect
 from onnx_classify import OnnxClassify
 
 ## Global definitions
-__version__ = "0.0.5" # The APP version
+__version__ = "0.1.0" # The APP version
 
 detect_model_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
 classify_model_url = "https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
@@ -119,13 +119,14 @@ class VisionAiApp(MDApp):
         self.classify_model_path = os.path.join(self.model_dir, "resnet18-v1-7.onnx")
 
         # file managers
+        self.img_preview = False
         self.is_img_manager_open = False
         self.img_file_manager = MDFileManager(
             exit_manager=self.img_file_exit_manager,
             select_path=self.select_img_path,
-            ext=[".png", ".jpg", ".jpeg"],  # Restrict to image files
+            ext=[".png", ".jpg", ".jpeg", "webp"],  # Restrict to image files
             selector="file",  # Restrict to selecting files only
-            preview=True,
+            preview=False,
             #show_hidden_files=True,
         )
         self.is_op_file_mgr_open = False
@@ -632,6 +633,20 @@ class VisionAiApp(MDApp):
                     print(f"Could not delete the audion files, error: {e}")
         self.show_toast_msg("Executed the audio cleanup!")
         self.txt_dialog_closer(instance)
+
+    def img_preview_on(self):
+        print("Switch pressed...")
+        img_preview_sw = self.root.ids.settings_box.ids.img_preview_switch
+        if self.img_preview:
+            img_preview_sw.icon = "toggle-switch-off"
+            img_preview_sw.text_color = "gray"
+            self.img_file_manager.preview = False
+            self.img_preview = False
+        else:
+            img_preview_sw.icon = "toggle-switch"
+            img_preview_sw.text_color = "green"
+            self.img_file_manager.preview = True
+            self.img_preview = True
 
     def events(self, instance, keyboard, keycode, text, modifiers):
         """Handle mobile device button presses (e.g., Android back button)."""

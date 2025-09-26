@@ -1,7 +1,7 @@
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.screen import MDScreen
-from kivymd.uix.list import MDList, OneLineIconListItem, IconLeftWidget, IconRightWidget
+from kivymd.uix.list import MDList, OneLineIconListItem, IconLeftWidget, IconRightWidget, OneLineAvatarIconListItem
 
 from kivy.uix.accordion import Accordion, AccordionItem
 from kivy.lang import Builder
@@ -34,6 +34,16 @@ Builder.load_string('''
                         on_release: app.show_delete_alert()
                         IconLeftWidget:
                             icon: "broom"
+                    OneLineAvatarIconListItem:
+                        text: "Preview in Image Selection!"
+                        IconLeftWidget:
+                            icon: "image"
+                        IconRightWidget:
+                            id: img_preview_switch
+                            icon: "toggle-switch-off"
+                            on_release: app.img_preview_on()
+                            theme_text_color: "Custom"
+                            text_color: "gray"
 
         AccordionItem:
             title: "Help & Support"

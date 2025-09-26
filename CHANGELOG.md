@@ -2,6 +2,11 @@
 
 ## Changes per version
 
+### 0.1.0
+- Everthing till `0.0.5` including the `Image Classification` feature.
+- Setting image preview mode to OFF by default & adding a setting to turn preview ON while browsing the images in file manager (this may slow down or make the app unresponsive).
+- Added `webp` image support.
+
 ### 0.0.5
 - Adding `Image Prediction` menu which can give top 5 predictions out of 1000 types as per `Synset` list for the main object on image.
 - Changing the model files downlaod style to ask for user prompt.
