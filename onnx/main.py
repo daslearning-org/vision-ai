@@ -32,7 +32,7 @@ from onnx_detect import OnnxDetect
 from onnx_classify import OnnxClassify
 
 ## Global definitions
-__version__ = "0.1.0" # The APP version
+__version__ = "0.1.1" # The APP version
 
 detect_model_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
 classify_model_url = "https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
@@ -471,9 +471,8 @@ class VisionAiApp(MDApp):
         now = datetime.datetime.now()
         current_time = str(now.strftime("%H%M%S"))
         current_date = str(now.strftime("%Y%m%d"))
-        internal_dir = os.path.join(self.internal_storage, 'images')
-        capture_file = f"aivision-{current_date}-{current_time}.png"
-        self.image_path = os.path.join(internal_dir, capture_file)
+        capture_file = f"cam-{current_date}-{current_time}.png"
+        self.image_path = os.path.join(self.op_dir, capture_file)
         self.camera.export_to_png(self.image_path)
         onnx_thread = Thread(target=self.onnx_detect.run_detect, args=(self.image_path, self.onnx_detect_callback, "camObjDetect"), daemon=True)
         onnx_thread.start()
