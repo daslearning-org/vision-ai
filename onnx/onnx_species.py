@@ -14,19 +14,21 @@ else:
     base_path = os.path.dirname(os.path.abspath(__file__))
 models_dir = os.path.join(base_path, "model_files")
 save_path = os.path.join(base_path, 'outputs')
-synset_path = os.path.join(base_path, 'synset_words.txtset')
+label_file_path = os.path.join(base_path, 'spicesNet_labels_v401a.txtset')
 
 
-class OnnxClassify():
+class OnnxSpecies():
     def __init__(self, save_dir=save_path, model_dir=models_dir):
         self.model_flag = False
         self.sess = None
         self.save_dir = save_dir
         self.model_dir = model_dir
+        with open(label_file_path, 'r') as f:
+            self.labels = [line.strip() for line in f.readlines()]
 
-    def start_classify_session(self, model_name="resnet18-v1-7.onnx"):
+    def start_classify_session(self, model_name="spicesNet_v401a.onnx"):
         model_path = os.path.join(self.model_dir, model_name)
-        download_path = os.path.join(self.model_dir, "resnet18-v1-7.onnx")
+        download_path = os.path.join(self.model_dir, "spicesNet_v401a.onnx")
         if os.path.exists(download_path):
             model_path = download_path
             self.model_flag = True
@@ -36,7 +38,7 @@ class OnnxClassify():
             model_path = download_path
             print(f"The onnx model: {model_path} does not exist! Downloading it now...")
             # try to download the file from github as a backup
-            downlaod_url = "https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
+            downlaod_url = "https://github.com/daslearning-org/vision-ai/releases/download/vOnnxModels/spicesNet_v401a.onnx"
             import requests
             try:
                 with requests.get(downlaod_url, stream=True) as req:
@@ -54,16 +56,28 @@ class OnnxClassify():
                 self.sess = InferenceSession(model_path)
                 # Get input and output names
                 self.input_name = self.sess.get_inputs()[0].name
-                self.output_name = self.sess.get_outputs()[0].name
                 return True
             except Exception as e:
                 print(f"Error loading model: {e}")
         return False
 
-    def softmax(self, x):
-        # Compute softmax probabilities
-        exp_x = np.exp(x - np.max(x, axis=1, keepdims=True))
-        return exp_x / np.sum(exp_x, axis=1, keepdims=True)
+    def preprocess_image(image_path):
+        img = cv2.imread(image_path)
+        img = cv2.resize(img, (480, 480))
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = img.astype(np.float32) / 255.0
+        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
+        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
+        img = (img - mean) / std
+        img = np.expand_dims(img, axis=0)  # (1, 480, 480, 3)
+        return img
+
+    def postprocess_logits(logits, labels):
+        exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+        probabilities = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+        predicted_class = np.argmax(probabilities, axis=1)[0]
+        confidence = probabilities[0, predicted_class]
+        return predicted_class, confidence, labels[predicted_class]
 
     def run_classify(self, image_path, callback=None, caller=None):
         final_result = {"status": False, "message": "Initial load", "caller": caller}
@@ -74,39 +88,20 @@ class OnnxClassify():
         image_filename = image_path.split("/")[-1]
 
         try:
-            img = cv2.imread(image_path)
-            # Convert BGR to RGB
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            # Resize to 224x224 (standard for ImageNet models like MobileNetV2)
-            img = cv2.resize(img, (224, 224))
-            # Convert to float32 and normalize
-            img = img.astype(np.float32)
-            # Standard ImageNet normalization, ensure mean and std are float32
-            mean = np.array([0.485, 0.456, 0.406], dtype=np.float32) * 255
-            std = np.array([0.229, 0.224, 0.225], dtype=np.float32) * 255
-            img = (img - mean) / std
-            # Transpose to [C, H, W] and add batch dimension [1, C, H, W]
-            img = img.transpose(2, 0, 1)
-            img = np.expand_dims(img, axis=0)
-            # Ensure the final input is float32
-            img = img.astype(np.float32)
-
-            # use the labels from synset
-            with open(synset_path, 'r') as f:
-                labels = [line.split(' ', 1)[1].strip() for line in f.readlines()]
+            img = self.preprocess_image(image_path)
 
             # run the classification
-            outputs = self.sess.run([self.output_name], {self.input_name: img})
-            probabilities = self.softmax(outputs[0])
-            top5_indices = np.argsort(probabilities[0])[::-1][:5]
-            top5_probs = probabilities[0][top5_indices]
+            outputs = self.sess.run(None, {self.input_name: img})
+            predicted_class, confidence, predicted_label = self.postprocess_logits(outputs[0], self.labels)
+            confidence = confidence*100
+
             # create the return label
-            label = "Top-5 predictions: \n"
-            for i, idx in enumerate(top5_indices):
-                percent = top5_probs[i] * 100
-                label = label + f"{i+1}. {labels[idx]}: [b][color=#2574f5]{percent:.2f}%[/color][/b] \n"
+            if int(predicted_class) == 2246:
+                label = "The image doen't contain any object that falls into the list!"
+            else:
+                label = f"Species: [b][color=#2574f5]{predicted_label[37:]}[/color][/b] \n"
+                label = label + f"Confidence: [b][color=#2574f5]{confidence:.2f}% [/color][/b]"
             final_result["message"] = label
-            final_result["status"] = True
         except Exception as e:
             print(f"Classification error: {e}")
             final_result["message"] = f"Classification error: {e}"

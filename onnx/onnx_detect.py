@@ -15,9 +15,6 @@ else:
 models_dir = os.path.join(base_path, "model_files")
 save_path = os.path.join(base_path, 'outputs')
 
-# Load the model
-model_path_local = 'ssd_mobilenet_v1.onnx'  # Ensure this path is correct
-
 # COCO class labels
 coco_labels = {
     1: 'person', 2: 'bicycle', 3: 'car', 4: 'motorcycle', 5: 'airplane', 6: 'bus', 7: 'train', 8: 'truck', 9: 'boat',
@@ -34,7 +31,7 @@ coco_labels = {
 
 
 class OnnxDetect():
-    def __init__(self, save_dir=save_path, model_dir=model_path_local):
+    def __init__(self, save_dir=save_path, model_dir=models_dir):
         self.model_flag = False
         self.sess = None
         self.save_dir = save_dir

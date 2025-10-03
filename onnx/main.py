@@ -32,10 +32,11 @@ from onnx_detect import OnnxDetect
 from onnx_classify import OnnxClassify
 
 ## Global definitions
-__version__ = "0.1.1" # The APP version
+__version__ = "0.2.0" # The APP version
 
 detect_model_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
 classify_model_url = "https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
+species_model_url = "https://github.com/daslearning-org/vision-ai/releases/download/vOnnxModels/spicesNet_v401a.onnx"
 # Determine the base path for your application's resources
 if getattr(sys, 'frozen', False):
     # Running as a PyInstaller bundle
@@ -117,6 +118,7 @@ class VisionAiApp(MDApp):
         os.makedirs(self.op_dir, exist_ok=True)
         self.detect_model_path = os.path.join(self.model_dir, "ssd_mobilenet_v1_10.onnx")
         self.classify_model_path = os.path.join(self.model_dir, "resnet18-v1-7.onnx")
+        self.species_model_path = os.path.join(self.model_dir, "spicesNet_v401a.onnx")
 
         # file managers
         self.img_preview = False
@@ -312,6 +314,16 @@ class VisionAiApp(MDApp):
 
     def on_img_classify(self):
         if not os.path.exists(self.classify_model_path) and self.is_downloading != "resnet18-v1-7.onnx":
+            self.popup_classify_model()
+        self.show_toast_msg("Select and image & get top 5 predictions")
+        if not self.onnx_classify:
+            self.onnx_classify = OnnxClassify(
+                save_dir=self.op_dir,
+                model_dir=self.model_dir,
+            )
+
+    def on_img_classify(self):
+        if not os.path.exists(self.classify_model_path) and self.is_downloading != "spicesNet_v401a.onnx":
             self.popup_classify_model()
         self.show_toast_msg("Select and image & get top 5 predictions")
         if not self.onnx_classify:

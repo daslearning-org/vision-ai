@@ -2,7 +2,8 @@
 
 ## Changes per version
 
-### 0.1.1
+### 0.2.0
+- Adding [SpeciesNet](https://github.com/google/cameratrapai) support to identify species from more than `2000` categories. We have converted the `PyTorch` model to `Onnx` model.
 - Changing the saving directory of raw camera images to `output` folder, so that user can clean both the raw & output images from `Settings`.
 
 ### 0.1.0
