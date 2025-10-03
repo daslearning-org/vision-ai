@@ -132,7 +132,7 @@ class VisionAiApp(MDApp):
         self.img_file_manager = MDFileManager(
             exit_manager=self.img_file_exit_manager,
             select_path=self.select_img_path,
-            ext=[".png", ".jpg", ".jpeg", "webp"],  # Restrict to image files
+            ext=[".png", ".jpg", ".jpeg", ".webp"],  # Restrict to image files
             selector="file",  # Restrict to selecting files only
             preview=False,
             #show_hidden_files=True,
@@ -572,13 +572,13 @@ class VisionAiApp(MDApp):
         if self.image_path == "":
             self.show_toast_msg("No image is selected!", is_error=True)
             return
-        if not self.onnx_classify_sess:
-            self.onnx_classify_sess = self.onnx_classify.start_classify_session()
+        if not self.onnx_species_sess:
+            self.onnx_species_sess = self.onnx_species.start_species_session()
             self.submit_onnx_species()
         if self.is_species_running:
             self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
             return
-        onnx_thread = Thread(target=self.onnx_species.run_species, args=(self.image_path, self.onnx_classify_callback, "imgSpecies"), daemon=True)
+        onnx_thread = Thread(target=self.onnx_species.run_species, args=(self.image_path, self.onnx_species_callback, "imgSpecies"), daemon=True)
         onnx_thread.start()
         self.is_species_running = True
         tmp_spin = TempSpinWait()

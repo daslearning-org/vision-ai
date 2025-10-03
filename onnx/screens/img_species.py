@@ -25,7 +25,7 @@ Builder.load_string('''
         padding: 14, 0, 14, 0 # left, top, right, bottom
 
         MDFillRoundFlatIconButton:
-            id: btn_upload
+            id: btn_spc_upload
             text: "Image"
             icon: "upload"
             font_size: sp(18)

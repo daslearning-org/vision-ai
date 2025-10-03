@@ -61,7 +61,7 @@ class OnnxSpecies():
                 print(f"Error loading model: {e}")
         return False
 
-    def preprocess_image(image_path):
+    def preprocess_image(self, image_path):
         img = cv2.imread(image_path)
         img = cv2.resize(img, (480, 480))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -72,7 +72,7 @@ class OnnxSpecies():
         img = np.expand_dims(img, axis=0)  # (1, 480, 480, 3)
         return img
 
-    def postprocess_logits(logits, labels):
+    def postprocess_logits(self, logits, labels):
         exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
         probabilities = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
         predicted_class = np.argmax(probabilities, axis=1)[0]
@@ -102,6 +102,7 @@ class OnnxSpecies():
                 label = f"Species: [b][color=#2574f5]{predicted_label[37:]}[/color][/b] \n"
                 label = label + f"Confidence: [b][color=#2574f5]{confidence:.2f}% [/color][/b]"
             final_result["message"] = label
+            final_result["status"] = True
         except Exception as e:
             print(f"Classification error: {e}")
             final_result["message"] = f"Classification error: {e}"
