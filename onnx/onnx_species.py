@@ -26,7 +26,7 @@ class OnnxSpecies():
         with open(label_file_path, 'r') as f:
             self.labels = [line.strip() for line in f.readlines()]
 
-    def start_classify_session(self, model_name="spicesNet_v401a.onnx"):
+    def start_species_session(self, model_name="spicesNet_v401a.onnx"):
         model_path = os.path.join(self.model_dir, model_name)
         download_path = os.path.join(self.model_dir, "spicesNet_v401a.onnx")
         if os.path.exists(download_path):
@@ -79,7 +79,7 @@ class OnnxSpecies():
         confidence = probabilities[0, predicted_class]
         return predicted_class, confidence, labels[predicted_class]
 
-    def run_classify(self, image_path, callback=None, caller=None):
+    def run_species(self, image_path, callback=None, caller=None):
         final_result = {"status": False, "message": "Initial load", "caller": caller}
         if self.sess is None:
             final_result['message'] = "Onnx session was not initialized! Check if model has been downloaded."
@@ -97,7 +97,7 @@ class OnnxSpecies():
 
             # create the return label
             if int(predicted_class) == 2246:
-                label = "The image doen't contain any object that falls into the list!"
+                label = "The image does not contain any object that falls into the list!"
             else:
                 label = f"Species: [b][color=#2574f5]{predicted_label[37:]}[/color][/b] \n"
                 label = label + f"Confidence: [b][color=#2574f5]{confidence:.2f}% [/color][/b]"

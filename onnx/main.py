@@ -27,9 +27,12 @@ Window.softinput_mode = "below_target"
 # Import your local screen classes & modules
 from screens.img_obj_detect import ImgObjDetBox, TempSpinWait
 from screens.cam_obj_detect import CamObjDetBox
+from screens.img_obj_classify import ImgClassifytBox
+from screens.img_species import ImgSpeciesBox
 from screens.setting import SettingsBox
 from onnx_detect import OnnxDetect
 from onnx_classify import OnnxClassify
+from onnx_species import OnnxSpecies
 
 ## Global definitions
 __version__ = "0.2.0" # The APP version
@@ -57,12 +60,15 @@ class VisionAiApp(MDApp):
     is_detect_running = ObjectProperty(None)
     is_downloading = ObjectProperty(None)
     is_classify_running = ObjectProperty(None)
+    is_species_running = ObjectProperty(None)
     image_path = StringProperty("")
     op_img_path = StringProperty("")
     onnx_detect = ObjectProperty(None)
     onnx_detect_sess = ObjectProperty(None)
     onnx_classify = ObjectProperty(None)
     onnx_classify_sess = ObjectProperty(None)
+    onnx_species = ObjectProperty(None)
+    onnx_species_sess = ObjectProperty(None)
     cam_found = ObjectProperty(None)
     camera = ObjectProperty(None)
     detect_model_path = StringProperty("")
@@ -188,6 +194,8 @@ class VisionAiApp(MDApp):
             result_box = self.root.ids.img_detect_box.ids.result_image
         elif self.root.ids.screen_manager.current == "imgClassify":
             result_box = self.root.ids.img_classify_box.ids.result_label
+        elif self.root.ids.screen_manager.current == "imgSpecies":
+            result_box = self.root.ids.img_species_box.ids.result_label
         else:
             result_box = self.root.ids.cam_detect_box.ids.cam_result_image
         result_box.clear_widgets()
@@ -203,6 +211,9 @@ class VisionAiApp(MDApp):
 
     def download_classify_model(self, instance):
         self.download_model_file(classify_model_url, self.classify_model_path, instance)
+
+    def download_species_model(self, instance):
+        self.download_model_file(species_model_url, self.species_model_path, instance)
 
     def popup_detect_model(self):
         buttons = [
@@ -243,6 +254,27 @@ class VisionAiApp(MDApp):
         self.show_text_dialog(
             "Downlaod the model file",
             f"You need to downlaod the file for the first time (~45MB)",
+            buttons
+        )
+
+    def popup_species_model(self):
+        buttons = [
+            MDFlatButton(
+                text="Cancel",
+                theme_text_color="Custom",
+                text_color=self.theme_cls.primary_color,
+                on_release=self.txt_dialog_closer
+            ),
+            MDFlatButton(
+                text="Ok",
+                theme_text_color="Custom",
+                text_color="green",
+                on_release=self.download_species_model
+            ),
+        ]
+        self.show_text_dialog(
+            "Downlaod the model file",
+            f"You need to downlaod the file for the first time (~215MB)",
             buttons
         )
 
@@ -315,19 +347,19 @@ class VisionAiApp(MDApp):
     def on_img_classify(self):
         if not os.path.exists(self.classify_model_path) and self.is_downloading != "resnet18-v1-7.onnx":
             self.popup_classify_model()
-        self.show_toast_msg("Select and image & get top 5 predictions")
+        self.show_toast_msg("Select an image & get top 5 predictions")
         if not self.onnx_classify:
             self.onnx_classify = OnnxClassify(
                 save_dir=self.op_dir,
                 model_dir=self.model_dir,
             )
 
-    def on_img_classify(self):
-        if not os.path.exists(self.classify_model_path) and self.is_downloading != "spicesNet_v401a.onnx":
-            self.popup_classify_model()
-        self.show_toast_msg("Select and image & get top 5 predictions")
-        if not self.onnx_classify:
-            self.onnx_classify = OnnxClassify(
+    def on_img_species(self):
+        if not os.path.exists(self.species_model_path) and self.is_downloading != "spicesNet_v401a.onnx":
+            self.popup_species_model()
+        self.show_toast_msg("Select an image & identify the Species from more than 2000 species list")
+        if not self.onnx_species:
+            self.onnx_species = OnnxSpecies(
                 save_dir=self.op_dir,
                 model_dir=self.model_dir,
             )
@@ -377,10 +409,32 @@ class VisionAiApp(MDApp):
         except Exception as e:
             self.show_toast_msg(f"Error: {e}", is_error=True)
 
+    def open_spcnt_img_file(self):
+        """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
+        if self.is_downloading == "spicesNet_v401a.onnx":
+            self.show_toast_msg("Please wait for the model download to finish!", is_error=True)
+            return
+        if not os.path.exists(self.species_model_path) and self.is_downloading != "spicesNet_v401a.onnx":
+            self.onnx_species_sess = False
+            self.popup_species_model()
+            return
+        if not self.onnx_species_sess: # update it
+            self.onnx_species_sess = self.onnx_species.start_species_session()
+        if self.is_species_running:
+            self.show_toast_msg("Please wait for the current operation to finish", is_error=True)
+            return
+        try:
+            self.img_file_manager.show(self.external_storage)
+            self.is_img_manager_open = True
+        except Exception as e:
+            self.show_toast_msg(f"Error: {e}", is_error=True)
+
     def select_img_path(self, path: str):
         self.image_path = path
         if self.root.ids.screen_manager.current == "imgObjDetect":
             uploaded_image_box = self.root.ids.img_detect_box.ids.uploaded_image
+        elif self.root.ids.screen_manager.current == "imgSpecies":
+            uploaded_image_box = self.root.ids.img_species_box.ids.uploaded_image
         else:
             uploaded_image_box = self.root.ids.img_classify_box.ids.uploaded_image
         uploaded_image_box.clear_widgets()
@@ -391,6 +445,8 @@ class VisionAiApp(MDApp):
         uploaded_image_box.add_widget(fitImage)
         if self.root.ids.screen_manager.current == "imgObjDetect":
             result_box = self.root.ids.img_detect_box.ids.result_image
+        elif self.root.ids.screen_manager.current == "imgSpecies":
+            result_box = self.root.ids.img_species_box.ids.result_label
         else:
             result_box = self.root.ids.img_classify_box.ids.result_label
         result_box.clear_widgets()
@@ -512,6 +568,24 @@ class VisionAiApp(MDApp):
         result_box.clear_widgets()
         result_box.add_widget(tmp_spin)
 
+    def submit_onnx_species(self):
+        if self.image_path == "":
+            self.show_toast_msg("No image is selected!", is_error=True)
+            return
+        if not self.onnx_classify_sess:
+            self.onnx_classify_sess = self.onnx_classify.start_classify_session()
+            self.submit_onnx_species()
+        if self.is_species_running:
+            self.show_toast_msg("Please wait for the previous request to finish", is_error=True)
+            return
+        onnx_thread = Thread(target=self.onnx_species.run_species, args=(self.image_path, self.onnx_classify_callback, "imgSpecies"), daemon=True)
+        onnx_thread.start()
+        self.is_species_running = True
+        tmp_spin = TempSpinWait()
+        result_box = self.root.ids.img_species_box.ids.result_label
+        result_box.clear_widgets()
+        result_box.add_widget(tmp_spin)
+
     def onnx_detect_callback(self, onnx_resp):
         status = onnx_resp["status"]
         message = onnx_resp["message"]
@@ -560,6 +634,24 @@ class VisionAiApp(MDApp):
         else:
             self.show_toast_msg(message, is_error=True)
 
+    def onnx_species_callback(self, onnx_resp):
+        status = onnx_resp["status"]
+        message = onnx_resp["message"]
+        caller = onnx_resp["caller"]
+        self.is_species_running = False
+        result_box = self.root.ids.img_species_box.ids.result_label
+        result_box.clear_widgets()
+        if status is True:
+            classify_label = MDLabel(
+                text=message,
+                halign="left",
+                valign="top",
+                markup=True
+            )
+            result_box.add_widget(classify_label)
+        else:
+            self.show_toast_msg(message, is_error=True)
+
     def reset_object_detect(self):
         self.image_path = ""
         uploaded_image_box = self.root.ids.img_detect_box.ids.uploaded_image
@@ -577,6 +669,13 @@ class VisionAiApp(MDApp):
         uploaded_image_box = self.root.ids.img_classify_box.ids.uploaded_image
         uploaded_image_box.clear_widgets()
         result_box = self.root.ids.img_classify_box.ids.result_label
+        result_box.clear_widgets()
+
+    def reset_species(self):
+        self.image_path = ""
+        uploaded_image_box = self.root.ids.img_species_box.ids.uploaded_image
+        uploaded_image_box.clear_widgets()
+        result_box = self.root.ids.img_species_box.ids.result_label
         result_box.clear_widgets()
 
     def open_link(self, instance, url):

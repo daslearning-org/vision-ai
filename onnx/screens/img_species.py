@@ -32,7 +32,7 @@ Builder.load_string('''
             #md_bg_color: '#333036'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.2
-            on_release: app.open_clsfy_img_file()
+            on_release: app.open_spcnt_img_file()
 
         MDFillRoundFlatIconButton:
             id: btn_submit
@@ -42,7 +42,7 @@ Builder.load_string('''
             md_bg_color: 'orange'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.6
-            on_release: app.submit_onnx_classify()
+            on_release: app.submit_onnx_species()
 
         MDFillRoundFlatIconButton:
             id: btn_reset
@@ -52,7 +52,7 @@ Builder.load_string('''
             md_bg_color: '#333036'
             pos_hint: {"center_x": .5, "center_y": .5}
             size_hint_x: 0.2
-            on_release: app.reset_classify()
+            on_release: app.reset_species()
 
     BoxLayout: # converted image
         size_hint_y: 0.5
