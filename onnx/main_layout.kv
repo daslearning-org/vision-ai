@@ -3,6 +3,7 @@
 #:import ImgObjDetBox screens.img_obj_detect.ImgObjDetBox
 #:import CamObjDetBox screens.cam_obj_detect.CamObjDetBox
 #:import ImgClassifytBox screens.img_obj_classify.ImgClassifytBox
+#:import ImgSpeciesBox screens.img_species.ImgSpeciesBox
 #:import SettingsBox screens.setting.SettingsBox
 
 <DrawerClickableItem@MDNavigationDrawerItem>
@@ -31,7 +32,7 @@
         text: "Select Operation"
 
     DrawerClickableItem:
-        icon: "horse"
+        icon: "car"
         text: "Image Object Detection"
         on_press:
             root.nav_drawer.set_state("close")
@@ -45,11 +46,18 @@
             root.screen_manager.current = "camObjDetect"
 
     DrawerClickableItem:
-        icon: "bird"
+        icon: "cat"
         text: "Image Prediction"
         on_press:
             root.nav_drawer.set_state("close")
             root.screen_manager.current = "imgClassify"
+
+    DrawerClickableItem:
+        icon: "elephant"
+        text: "Identify Species"
+        on_press:
+            root.nav_drawer.set_state("close")
+            root.screen_manager.current = "imgSpecies"
 
     DrawerClickableItem:
         icon: "wrench"
@@ -96,6 +104,12 @@ MDScreen:
                     on_enter: app.on_img_classify()
                     ImgClassifytBox:
                         id: img_classify_box
+
+                MDScreen:
+                    name: "imgSpecies"
+                    on_enter: app.on_img_species()
+                    ImgSpeciesBox:
+                        id: img_species_box
 
                 MDScreen:
                     name: "settings"
