@@ -56,6 +56,7 @@ class OnnxSpecies():
                 self.sess = InferenceSession(model_path)
                 # Get input and output names
                 self.input_name = self.sess.get_inputs()[0].name
+                #print(self.sess.get_inputs()[0].shape)
                 return True
             except Exception as e:
                 print(f"Error loading model: {e}")
@@ -66,9 +67,6 @@ class OnnxSpecies():
         img = cv2.resize(img, (480, 480))
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = img.astype(np.float32) / 255.0
-        mean = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-        std = np.array([0.229, 0.224, 0.225], dtype=np.float32)
-        img = (img - mean) / std
         img = np.expand_dims(img, axis=0)  # (1, 480, 480, 3)
         return img
 
