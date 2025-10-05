@@ -35,7 +35,7 @@ from onnx_classify import OnnxClassify
 from onnx_species import OnnxSpecies
 
 ## Global definitions
-__version__ = "0.2.0" # The APP version
+__version__ = "0.2.1" # The APP version
 
 detect_model_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
 classify_model_url = "https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
