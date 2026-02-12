@@ -2,6 +2,9 @@
 
 ## Changes per version
 
+### 0.3.1
+- Using [Kivy-Plyer](https://github.com/kivy/plyer/blob/master/plyer/facades/filechooser.py) to use native file manager.
+
 ### 0.2.1
 - Fixing `SpeciesNet` input data array to have proper detection.
 
