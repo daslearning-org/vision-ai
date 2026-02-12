@@ -14,6 +14,8 @@ from kivy.uix.image import Image
 from kivy.uix.camera import Camera
 from kivy.clock import Clock
 
+from plyer import filechooser
+
 from kivymd.app import MDApp
 from kivymd.uix.navigationdrawer import MDNavigationDrawerMenu
 from kivymd.uix.filemanager import MDFileManager
@@ -35,7 +37,7 @@ from onnx_classify import OnnxClassify
 from onnx_species import OnnxSpecies
 
 ## Global definitions
-__version__ = "0.2.1" # The APP version
+__version__ = "0.3.0" # The APP version
 
 detect_model_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
 classify_model_url = "https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
@@ -72,6 +74,7 @@ class VisionAiApp(MDApp):
     cam_found = ObjectProperty(None)
     camera = ObjectProperty(None)
     detect_model_path = StringProperty("")
+    last_upload_path = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -384,10 +387,29 @@ class VisionAiApp(MDApp):
             self.show_toast_msg("Please wait for the current operation to finish", is_error=True)
             return
         try:
-            self.img_file_manager.show(self.external_storage)  # native app specific path
+            #self.img_file_manager.show(self.external_storage)  # native app specific path
+            if not self.last_upload_path:
+                self.last_upload_path = self.external_storage
+            filechooser.open_file(
+                on_selection = self.handle_img_dt_selection,
+                path = self.last_upload_path,
+                multiple = False,
+                filters = [["*photo","*png", "*jpg", "*jpeg", "*webp"]],
+                preview = True,
+            )
             self.is_img_manager_open = True
         except Exception as e:
             self.show_toast_msg(f"Error: {e}", is_error=True)
+
+    def handle_img_dt_selection(self, selection=None):
+        '''
+        Callback function for handling the image selection.
+        '''
+        self.is_img_manager_open = False
+        if selection:
+            image_path = str(selection[0])
+            self.select_img_path(image_path)
+            self.last_upload_path = os.path.dirname(image_path)
 
     def open_clsfy_img_file(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
@@ -450,7 +472,7 @@ class VisionAiApp(MDApp):
         else:
             result_box = self.root.ids.img_classify_box.ids.result_label
         result_box.clear_widgets()
-        self.img_file_exit_manager()
+        #self.img_file_exit_manager()
 
     def img_file_exit_manager(self, *args):
         """Closes the file manager for image upload"""
