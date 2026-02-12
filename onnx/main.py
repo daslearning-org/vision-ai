@@ -37,7 +37,7 @@ from onnx_classify import OnnxClassify
 from onnx_species import OnnxSpecies
 
 ## Global definitions
-__version__ = "0.3.0" # The APP version
+__version__ = "0.3.1" # The APP version
 
 detect_model_url = "https://github.com/onnx/models/raw/main/validated/vision/object_detection_segmentation/ssd-mobilenetv1/model/ssd_mobilenet_v1_10.onnx"
 classify_model_url = "https://github.com/onnx/models/raw/main/validated/vision/classification/resnet/model/resnet18-v1-7.onnx"
@@ -281,7 +281,7 @@ class VisionAiApp(MDApp):
             buttons
         )
 
-    def show_toast_msg(self, message, is_error=False):
+    def show_toast_msg(self, message, is_error=False, duration=3):
         from kivymd.uix.snackbar import MDSnackbar
         bg_color = (0.2, 0.6, 0.2, 1) if not is_error else (0.8, 0.2, 0.2, 1)
         MDSnackbar(
@@ -292,7 +292,7 @@ class VisionAiApp(MDApp):
             md_bg_color=bg_color,
             y=dp(24),
             pos_hint={"center_x": 0.5},
-            duration=3
+            duration=duration
         ).open()
 
     def show_text_dialog(self, title, text="", buttons=[]):
@@ -394,7 +394,7 @@ class VisionAiApp(MDApp):
                 on_selection = self.handle_img_dt_selection,
                 path = self.last_upload_path,
                 multiple = False,
-                filters = [["*photo","*png", "*jpg", "*jpeg", "*webp"]],
+                filters = ["*.JPG","*.png", "*.jpg", "*.jpeg", "*.webp"],
                 preview = True,
             )
             self.is_img_manager_open = True
@@ -408,7 +408,8 @@ class VisionAiApp(MDApp):
         self.is_img_manager_open = False
         if selection:
             image_path = str(selection[0])
-            self.select_img_path(image_path)
+            Clock.schedule_once(lambda dt: self.select_img_path(image_path))
+            #self.select_img_path(image_path)
             self.last_upload_path = os.path.dirname(image_path)
 
     def open_clsfy_img_file(self):
@@ -453,6 +454,7 @@ class VisionAiApp(MDApp):
 
     def select_img_path(self, path: str):
         self.image_path = path
+        self.show_toast_msg(f"Selected image: {path}", duration=4) # debug
         if self.root.ids.screen_manager.current == "imgObjDetect":
             uploaded_image_box = self.root.ids.img_detect_box.ids.uploaded_image
         elif self.root.ids.screen_manager.current == "imgSpecies":
@@ -464,7 +466,13 @@ class VisionAiApp(MDApp):
             source = path,
             fit_mode = "contain"
         )
+        file_label = MDLabel(
+            text=f"{path}",
+            halign="center",
+            adaptive_height=True
+        )
         uploaded_image_box.add_widget(fitImage)
+        uploaded_image_box.add_widget(file_label)
         if self.root.ids.screen_manager.current == "imgObjDetect":
             result_box = self.root.ids.img_detect_box.ids.result_image
         elif self.root.ids.screen_manager.current == "imgSpecies":

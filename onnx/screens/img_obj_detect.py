@@ -29,6 +29,7 @@ Builder.load_string('''
     spacing: dp(4)
 
     BoxLayout: # original image
+        orientation: 'vertical'
         size_hint_y: 0.4
         id: uploaded_image
         #adaptive_height: True
