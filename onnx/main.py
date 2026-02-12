@@ -132,14 +132,16 @@ class VisionAiApp(MDApp):
         # file managers
         self.img_preview = False
         self.is_img_manager_open = False
-        self.img_file_manager = MDFileManager(
-            exit_manager=self.img_file_exit_manager,
-            select_path=self.select_img_path,
-            ext=[".png", ".jpg", ".jpeg", ".webp"],  # Restrict to image files
-            selector="file",  # Restrict to selecting files only
-            preview=False,
-            #show_hidden_files=True,
-        )
+
+        #self.img_file_manager = MDFileManager(
+        #    exit_manager=self.img_file_exit_manager,
+        #    select_path=self.select_img_path,
+        #    ext=[".png", ".jpg", ".jpeg", ".webp"],  # Restrict to image files
+        #    selector="file",  # Restrict to selecting files only
+        #    preview=False,
+        #    #show_hidden_files=True,
+        #)
+
         self.is_op_file_mgr_open = False
         self.op_file_manager = MDFileManager(
             exit_manager=self.op_file_exit_manager,
@@ -391,17 +393,17 @@ class VisionAiApp(MDApp):
             if not self.last_upload_path:
                 self.last_upload_path = self.external_storage
             filechooser.open_file(
-                on_selection = self.handle_img_dt_selection,
+                on_selection = self.handle_img_selection,
                 path = self.last_upload_path,
                 multiple = False,
-                filters = ["*.JPG","*.png", "*.jpg", "*.jpeg", "*.webp"],
-                preview = True,
+                filters = ["*.jpg","*.png", "*.jpeg", "*.webp", "*"],
+                preview = self.img_preview,
             )
             self.is_img_manager_open = True
         except Exception as e:
             self.show_toast_msg(f"Error: {e}", is_error=True)
 
-    def handle_img_dt_selection(self, selection=None):
+    def handle_img_selection(self, selection=None):
         '''
         Callback function for handling the image selection.
         '''
@@ -410,7 +412,6 @@ class VisionAiApp(MDApp):
             image_path = str(selection[0])
             Clock.schedule_once(lambda dt: self.select_img_path(image_path))
             #self.select_img_path(image_path)
-            self.last_upload_path = os.path.dirname(image_path)
 
     def open_clsfy_img_file(self):
         """Open the file manager to select an image file. On android use Downloads or Pictures folders only"""
@@ -427,7 +428,16 @@ class VisionAiApp(MDApp):
             self.show_toast_msg("Please wait for the current operation to finish", is_error=True)
             return
         try:
-            self.img_file_manager.show(self.external_storage)
+            #self.img_file_manager.show(self.external_storage)
+            if not self.last_upload_path:
+                self.last_upload_path = self.external_storage
+            filechooser.open_file(
+                on_selection = self.handle_img_selection,
+                path = self.last_upload_path,
+                multiple = False,
+                filters = ["*.jpg","*.png", "*.jpeg", "*.webp", "*"],
+                preview = self.img_preview,
+            )
             self.is_img_manager_open = True
         except Exception as e:
             self.show_toast_msg(f"Error: {e}", is_error=True)
@@ -447,14 +457,28 @@ class VisionAiApp(MDApp):
             self.show_toast_msg("Please wait for the current operation to finish", is_error=True)
             return
         try:
-            self.img_file_manager.show(self.external_storage)
+            #self.img_file_manager.show(self.external_storage)
+            if not self.last_upload_path:
+                self.last_upload_path = self.external_storage
+            filechooser.open_file(
+                on_selection = self.handle_img_selection,
+                path = self.last_upload_path,
+                multiple = False,
+                filters = ["*.jpg","*.png", "*.jpeg", "*.webp", "*"],
+                preview = self.img_preview,
+            )
             self.is_img_manager_open = True
         except Exception as e:
             self.show_toast_msg(f"Error: {e}", is_error=True)
 
     def select_img_path(self, path: str):
+        if not (path.endswith(".jpg") or path.endswith(".jpeg") or path.endswith(".png") or path.endswith(".webp")):
+            self.show_toast_msg(f"Selected file: `{path}` is not an image", is_error=True)
+            self.image_path = ""
+            return
         self.image_path = path
-        self.show_toast_msg(f"Selected image: {path}", duration=4) # debug
+        self.show_toast_msg(f"Selected image: {path}") # debug
+        self.last_upload_path = os.path.dirname(path)
         if self.root.ids.screen_manager.current == "imgObjDetect":
             uploaded_image_box = self.root.ids.img_detect_box.ids.uploaded_image
         elif self.root.ids.screen_manager.current == "imgSpecies":
@@ -485,7 +509,7 @@ class VisionAiApp(MDApp):
     def img_file_exit_manager(self, *args):
         """Closes the file manager for image upload"""
         self.is_img_manager_open = False
-        self.img_file_manager.close()
+        #self.img_file_manager.close()
 
     def open_op_file_manager(self, instance):
         """Open the file manager to select destination folder. On android use Downloads or Pictures folders only"""
@@ -780,33 +804,33 @@ class VisionAiApp(MDApp):
         if self.img_preview:
             img_preview_sw.icon = "toggle-switch-off"
             img_preview_sw.text_color = "gray"
-            self.img_file_manager.preview = False
+            #self.img_file_manager.preview = False
             self.img_preview = False
         else:
             img_preview_sw.icon = "toggle-switch"
             img_preview_sw.text_color = "green"
-            self.img_file_manager.preview = True
+            #self.img_file_manager.preview = True
             self.img_preview = True
 
     def events(self, instance, keyboard, keycode, text, modifiers):
         """Handle mobile device button presses (e.g., Android back button)."""
-        if keyboard in (1001, 27):  # Android back button or equivalent
-            if self.is_img_manager_open:
-                # Check if we are at the root of the directory tree
-                if self.img_file_manager.current_path == self.external_storage:
-                    self.show_toast_msg(f"Closing file manager from main storage")
-                    self.img_file_exit_manager()
-                else:
-                    self.img_file_manager.back()  # Navigate back within file manager
-                return True  # Consume the event to prevent app exit
-            if self.is_op_file_mgr_open:
-                # Check if we are at the root of the directory tree
-                if self.op_file_manager.current_path == self.external_storage:
-                    self.show_toast_msg(f"Closing file manager from main storage")
-                    self.op_file_exit_manager()
-                else:
-                    self.op_file_manager.back()  # Navigate back within file manager
-                return True
+        #if keyboard in (1001, 27):  # Android back button or equivalent
+        #    if self.is_img_manager_open:
+        #        # Check if we are at the root of the directory tree
+        #        if self.img_file_manager.current_path == self.external_storage:
+        #            self.show_toast_msg(f"Closing file manager from main storage")
+        #            self.img_file_exit_manager()
+        #        else:
+        #            self.img_file_manager.back()  # Navigate back within file manager
+        #        return True  # Consume the event to prevent app exit
+        #    if self.is_op_file_mgr_open:
+        #        # Check if we are at the root of the directory tree
+        #        if self.op_file_manager.current_path == self.external_storage:
+        #            self.show_toast_msg(f"Closing file manager from main storage")
+        #            self.op_file_exit_manager()
+        #        else:
+        #            self.op_file_manager.back()  # Navigate back within file manager
+        #        return True
         return False
 
 if __name__ == '__main__':
