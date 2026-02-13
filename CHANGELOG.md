@@ -3,7 +3,7 @@
 ## Changes per version
 
 ### 0.3.1
-- Using [Kivy-Plyer](https://github.com/kivy/plyer/blob/master/plyer/facades/filechooser.py) to use native file manager.
+- Using [Kivy-Plyer](https://github.com/kivy/plyer/blob/master/plyer/facades/filechooser.py) to use native file manager. This will also remember the last selected path (if we have done any upload after launching the app, not applicable for Android).
 
 ### 0.2.1
 - Fixing `SpeciesNet` input data array to have proper detection.
